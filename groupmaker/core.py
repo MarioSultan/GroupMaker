@@ -23,7 +23,7 @@ from    math                import  gcd
 tgl_color = "#2A646E"
 white = mcolors.LinearSegmentedColormap.from_list("white", ["white", "white"])
 tgl = mcolors.LinearSegmentedColormap.from_list("tgl", ["white", tgl_color])
-cayley = mcolors.LinearSegmentedColormap.from_list("cayley", ["#FF0000","#FF9100","#F2DA00","#2CDB00","#00DAE9","#1869FF"])#,"#7648FF","#D12BFF"])
+rainbow = mcolors.LinearSegmentedColormap.from_list("rainbow", ["#FF0000","#FF9100","#F2DA00","#2CDB00","#00DAE9","#1869FF"])#,"#7648FF","#D12BFF"])
 
 
 #################### GROUP CLASS ####################
@@ -43,7 +43,7 @@ class Group:
             raise ValueError(message)
 
         if names is None:
-            names = [str(i) for i in range(len(cayley))]
+            names = [i for i in range(len(cayley))]
 
         if len(names) != len(cayley):
             raise ValueError("The number of names must match the group order")
@@ -52,7 +52,17 @@ class Group:
         self.names = names
 
     def __str__(self):
-        return f"Group({self.names},*)"
+        G = []
+        for i in range(self.order()):
+            g = []
+            for j in range(self.order()):
+                g.append(self.names[self.cayley[i][j]])
+            G.append(g)
+        s = str(G)
+        return f"{G}"
+
+    def _print_group(self):
+        print(f"Group({self.cayley},{self.names})")
 
     def order(self):
         return len(self.cayley)
@@ -109,11 +119,15 @@ class Group:
 
     def proper_subgroups(self):
         G = self.cayley
+        E = self.names
         L = []
         n = self.order()
         for i in _graded_power_set_with_id(G):
+            ii = []
+            for j in i:
+                ii.append(E[j])
             if form_subgroup(G,i):
-                L.append(Group(_reset_renaming(subset(G,i))))         
+                L.append(Group(_reset_renaming(subset(G,i)),ii))         
         return L
 
     def subgroups(self):
@@ -123,9 +137,8 @@ class Group:
         S.append(self)
         return S
 
-    def cayley_table(self, title=None, colormap=cayley, names=None):
-        if title==None:
-            title = f"Cayley table"
+    def cayley_table(self, title="", colormap=rainbow, names=None):
+
         if names==None:
             if len(self.cayley)<=20:
                 names=True
@@ -160,9 +173,15 @@ class Group:
         plt.tight_layout()
         plt.show()
 
+    def delete_names(self):
+        self.names = [i for i in range(len(self.cayley))]
+
+
 
 
 #class Element:
+
+#class Automorphism:
     
 
 #################### HIDDEN COMMANDS ####################
@@ -188,6 +207,109 @@ def _sign(p):
                 inv += 1
 
     return 1 if inv % 2 == 0 else -1
+
+def _renaming_C(n):
+    r = []
+    if n >= 1:
+        r.append(r"$e$")
+        if n > 1:
+            r.append(r"$r$")
+            if n > 2:
+                for i in range(2, n):
+                    r.append(rf"$r^{{{i}}}$")
+    return r
+
+def _renaming_S(n):
+    """
+    Renombrado para S_n en notación de ciclos.
+    Coincide con el orden de elementos de generate_group_S(n).
+    """
+    def tuple_to_cycle(p):
+        visited = [False] * len(p)
+        cycles = []
+        for i in range(len(p)):
+            if not visited[i]:
+                curr = i
+                cycle = []
+                while not visited[curr]:
+                    visited[curr] = True
+                    cycle.append(curr + 1)  # Usamos representación 1-based (1..n)
+                    curr = p[curr]
+                if len(cycle) > 1:
+                    cycles.append("(" + "".join(map(str, cycle)) + ")")
+        return "".join(cycles) if cycles else "e"
+
+    perms = list(permutations(range(n)))
+    return [tuple_to_cycle(p) for p in perms]
+
+def _renaming_A(n):
+    """
+    Renombrado para A_n en notación de ciclos.
+    Coincide con el orden de elementos de generate_group_A(n).
+    """
+    def tuple_to_cycle(p):
+        visited = [False] * len(p)
+        cycles = []
+        for i in range(len(p)):
+            if not visited[i]:
+                curr = i
+                cycle = []
+                while not visited[curr]:
+                    visited[curr] = True
+                    cycle.append(curr + 1)
+                    curr = p[curr]
+                if len(cycle) > 1:
+                    cycles.append("(" + "".join(map(str, cycle)) + ")")
+        return "".join(cycles) if cycles else "e"
+
+    perms = [p for p in permutations(range(n)) if _sign(p) == 1]
+    return [tuple_to_cycle(p) for p in perms]
+
+def _renaming_D(n):
+    r = []
+    # Rotaciones
+    for k in range(n):
+        if k == 0:
+            r.append(r"$e$")
+        elif k == 1:
+            r.append(r"$r$")
+        else:
+            r.append(rf"$r^{{{k}}}$")
+            
+    # Reflexiones
+    for k in range(n):
+        if k == 0:
+            r.append(r"$s$")
+        elif k == 1:
+            r.append(r"$rs$")
+        else:
+            r.append(rf"$r^{{{k}}}s$")
+            
+    return r
+
+def _renaming_Q8():
+    return ["1","-1","i","-i","j","-j","k","-k"]
+
+def _renaming_U(n):
+    return [str(x) for x in range(1, n) if gcd(x, n) == 1]
+
+def _renaming_Dic(n):
+    names = []
+    for k in range(2 * n):
+        if k == 0:
+            names.append(r"$e$")
+        elif k == 1:
+            names.append(r"$a$")
+        else:
+            names.append(rf"$a^{{{k}}}$")
+    for k in range(2 * n):
+        if k == 0:
+            names.append(r"$x$")
+        elif k == 1:
+            names.append(r"$ax$")
+        else:
+            names.append(rf"$a^{{{k}}}x$")
+    return names
 
 def _reset_renaming(G):
     l = get_elements(G)
@@ -329,12 +451,12 @@ def identity(G):
 
 def is_closed(tabla):
     n = len(tabla)
+    E = get_elements(tabla)
+    if len(E)!=n:
+        return False
     for fila in tabla:
-            if len(fila) != n:
-                return False
-            for x in fila:
-                if not (0 <= x < n):
-                    return False
+        if len(fila) != n:
+            return False
     return True
 
 def is_group(tabla):
@@ -588,7 +710,7 @@ def direct_power(G,n):
         H = direct_product(H,G)
     return H
 
-def generate_group_C(n):
+def cyclic_group(n):
     elements = range(n)
     G = []
     for i in elements:
@@ -597,9 +719,9 @@ def generate_group_C(n):
             g.append((i+j)%n)
         G.append(g)
 
-    return G
+    return Group(G,_renaming_C(n))
 
-def generate_group_S(n):
+def symmetric_group(n):
 
     # Lista de todas las permutaciones
     perms = list(permutations(range(n)))
@@ -616,9 +738,9 @@ def generate_group_S(n):
             fila.append(index[tuple(p[i] for i in q)])
         G.append(fila)
 
-    return G
+    return Group(G,_renaming_S(n))
 
-def generate_group_A(n):
+def alternating_group(n):
 
     perms = [p for p in permutations(range(n)) if _sign(p) == 1]
 
@@ -632,9 +754,9 @@ def generate_group_A(n):
             fila.append(index[tuple(p[i] for i in q)])
         G.append(fila)
 
-    return G
+    return Group(G,_renaming_A(n))
 
-def generate_group_D(n):
+def dihedric_group(n):
 
     elems = [(k,0) for k in range(n)] + [(k,1) for k in range(n)]
 
@@ -656,9 +778,9 @@ def generate_group_D(n):
 
         G.append(fila)
 
-    return G
+    return Group(G,_renaming_D(n))
 
-def generate_group_Q8():
+def quaternion_group():
 
     # Multiplicación para la parte positiva
     base = {
@@ -711,13 +833,10 @@ def generate_group_Q8():
 
         G.append(fila)
 
-    return G
+    return Group(G,_renaming_Q8())
 
-def generate_group_U(n):
-    """
-    Genera la tabla de Cayley del grupo de unidades U(n) = (Z/nZ)*
-    bajo la multiplicación módulo n.
-    """
+def units_group(n):
+
     if n <= 1:
         raise ValueError("n debe ser mayor que 1")
     
@@ -731,9 +850,9 @@ def generate_group_U(n):
             fila.append(index[(a * b) % n])
         G.append(fila)
         
-    return G
+    return Group(G,_renaming_U(n))
 
-def generate_group_Dic(n):
+def dicyclic_group(n):
     """
     Genera la tabla de Cayley del grupo dicíclico Dic_n (de orden 4n).
     Presentación: <a, x | a^(2n) = 1, x^2 = a^n, x^-1 a x = a^-1>
@@ -764,7 +883,7 @@ def generate_group_Dic(n):
             fila.append(index[(m, c)])
         G.append(fila)
         
-    return G
+    return Group(G,_renaming_Dic(n))
 
 
 #################### VISUALIZATION AND RENAMING HELPERS ####################
@@ -775,7 +894,7 @@ def print_group(G):
             print(j,end="\t")
         print()
 
-def cayley_table(G, title="", colormap=cayley, names="", renaming=[]):
+def cayley_table(G, title="", colormap=rainbow, names="", renaming=[]):
     if title=="":
         if _obtener_nombre(G)==None:
             title = f"Cayley table"
@@ -816,107 +935,4 @@ def cayley_table(G, title="", colormap=cayley, names="", renaming=[]):
     plt.title(title)
     plt.tight_layout()
     plt.show()
-
-def renaming_group_C(n):
-    r = []
-    if n >= 1:
-        r.append(r"$e$")
-        if n > 1:
-            r.append(r"$r$")
-            if n > 2:
-                for i in range(2, n):
-                    r.append(rf"$r^{{{i}}}$")
-    return r
-
-def renaming_group_S(n):
-    """
-    Renombrado para S_n en notación de ciclos.
-    Coincide con el orden de elementos de generate_group_S(n).
-    """
-    def tuple_to_cycle(p):
-        visited = [False] * len(p)
-        cycles = []
-        for i in range(len(p)):
-            if not visited[i]:
-                curr = i
-                cycle = []
-                while not visited[curr]:
-                    visited[curr] = True
-                    cycle.append(curr + 1)  # Usamos representación 1-based (1..n)
-                    curr = p[curr]
-                if len(cycle) > 1:
-                    cycles.append("(" + "".join(map(str, cycle)) + ")")
-        return "".join(cycles) if cycles else "e"
-
-    perms = list(permutations(range(n)))
-    return [tuple_to_cycle(p) for p in perms]
-
-def renaming_group_A(n):
-    """
-    Renombrado para A_n en notación de ciclos.
-    Coincide con el orden de elementos de generate_group_A(n).
-    """
-    def tuple_to_cycle(p):
-        visited = [False] * len(p)
-        cycles = []
-        for i in range(len(p)):
-            if not visited[i]:
-                curr = i
-                cycle = []
-                while not visited[curr]:
-                    visited[curr] = True
-                    cycle.append(curr + 1)
-                    curr = p[curr]
-                if len(cycle) > 1:
-                    cycles.append("(" + "".join(map(str, cycle)) + ")")
-        return "".join(cycles) if cycles else "e"
-
-    perms = [p for p in permutations(range(n)) if _sign(p) == 1]
-    return [tuple_to_cycle(p) for p in perms]
-
-def renaming_group_D(n):
-    r = []
-    # Rotaciones
-    for k in range(n):
-        if k == 0:
-            r.append(r"$e$")
-        elif k == 1:
-            r.append(r"$r$")
-        else:
-            r.append(rf"$r^{{{k}}}$")
-            
-    # Reflexiones
-    for k in range(n):
-        if k == 0:
-            r.append(r"$s$")
-        elif k == 1:
-            r.append(r"$rs$")
-        else:
-            r.append(rf"$r^{{{k}}}s$")
-            
-    return r
-
-def renaming_group_Q8():
-    return ["1","-1","i","-i","j","-j","k","-k"]
-
-def renaming_group_U(n):
-    return [str(x) for x in range(1, n) if gcd(x, n) == 1]
-
-def renaming_group_Dic(n):
-    names = []
-    for k in range(2 * n):
-        if k == 0:
-            names.append(r"$e$")
-        elif k == 1:
-            names.append(r"$a$")
-        else:
-            names.append(rf"$a^{{{k}}}$")
-    for k in range(2 * n):
-        if k == 0:
-            names.append(r"$x$")
-        elif k == 1:
-            names.append(r"$ax$")
-        else:
-            names.append(rf"$a^{{{k}}}x$")
-    return names
 

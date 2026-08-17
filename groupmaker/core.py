@@ -18,17 +18,154 @@ from    collections         import  Counter
 from    math                import  gcd
 
 
-#################### DEFINICIONES PREVIAS ####################
+#################### DEFINITIONS ####################
 
 tgl_color = "#2A646E"
 white = mcolors.LinearSegmentedColormap.from_list("white", ["white", "white"])
 tgl = mcolors.LinearSegmentedColormap.from_list("tgl", ["white", tgl_color])
 cayley = mcolors.LinearSegmentedColormap.from_list("cayley", ["#FF0000","#FF9100","#F2DA00","#2CDB00","#00DAE9","#1869FF"])#,"#7648FF","#D12BFF"])
 
-type Group = list[list[int]]
+
+#################### GROUP CLASS ####################
+
+class Group:
+
+    def __init__(self, cayley, names=None):
+
+        """
+        if type(cayley)!=list[list[int]]:
+            return ValueError("The group must be a list of lists of integers")
+        """
+
+        valid, message = is_group(cayley)
+
+        if not valid:
+            raise ValueError(message)
+
+        if names is None:
+            names = [str(i) for i in range(len(cayley))]
+
+        if len(names) != len(cayley):
+            raise ValueError("The number of names must match the group order")
+
+        self.cayley = cayley
+        self.names = names
+
+    def __str__(self):
+        return f"Group({self.names},*)"
+
+    def order(self):
+        return len(self.cayley)
+
+    def identity(self):
+        neutro = None
+        for e in range(self.order()):
+            ok = True
+            for a in range(self.order()):
+                if self.cayley[e][a] != a:
+                    ok = False
+                    break
+                if self.cayley[a][e] != a:
+                    ok = False
+                    break
+            if ok:
+                neutro = e
+                break
+        return neutro
+
+    def element_orders(self):
+        O = []
+        for i in range(len(self.cayley)):
+            ik = self.cayley[i][i]
+            o = 1
+            while i!=ik:
+                ik = self.cayley[ik][i]
+                o+=1
+            O.append(o)
+        return O
+
+    def order_distribution(self):
+        l = sorted(self.element_orders())
+        return dict(Counter(l))
+
+    def is_cyclic(self):
+        return self.order() in self.element_orders()
+
+    def center(self):
+        G = self.cayley
+        Z = []
+        for i in range(len(G)):
+            r = True
+            for j in range(len(G)):
+                if G[i][j]!=G[j][i]:
+                    r = False
+                    break
+            if r:
+                Z.append(i)
+        return(Z)
+
+    def is_abelian(self):
+        return self.order()==len(self.center())
+
+    def proper_subgroups(self):
+        G = self.cayley
+        L = []
+        n = self.order()
+        for i in _graded_power_set_with_id(G):
+            if form_subgroup(G,i):
+                L.append(Group(_reset_renaming(subset(G,i))))         
+        return L
+
+    def subgroups(self):
+        G = self.cayley
+        S = self.proper_subgroups()[:]
+        S.insert(0,Group([[0]]))
+        S.append(self)
+        return S
+
+    def cayley_table(self, title=None, colormap=cayley, names=None):
+        if title==None:
+            title = f"Cayley table"
+        if names==None:
+            if len(self.cayley)<=20:
+                names=True
+            else:
+                names=False
 
 
-#################### COMANDOS OCULTOS ####################
+        elements = range(len(self.cayley))
+        fig, ax = plt.subplots(figsize=(6, 5))
+        im = ax.imshow(self.cayley, cmap=colormap)
+        ax.set_xticks(np.arange(len(elements)))
+        ax.set_yticks(np.arange(len(elements)))
+        ax.set_xticklabels(self.names)
+        ax.set_yticklabels(self.names)
+        ax.xaxis.tick_top()
+        
+        if names:
+            for i in range(len(elements)):
+                for j in range(len(elements)):
+                    color_texto = "black"
+                    ax.text(
+                        i,
+                        j,
+                        f"{self.names[self.cayley[j][i]]}",
+                        ha="center",
+                        va="center",
+                        color=color_texto,
+                        fontsize=12,
+                    )
+        
+        plt.title(title)
+        plt.tight_layout()
+        plt.show()
+
+
+
+#class Element:
+    
+
+#################### HIDDEN COMMANDS ####################
 
 def _obtener_nombre(var_obj):
     for nombre, valor in globals().items():
@@ -141,7 +278,7 @@ def _operate_cosets(G,C,A,B):
     return r
 
 
-#################### COMANDOS GENERALES ####################
+#################### GENERAL COMMANDS ####################
 
 def renamed_elements(G,L):
     renamed_G = []
@@ -167,7 +304,7 @@ def get_elements(G):
     return list(dict.fromkeys(e for fila in G for e in fila))
 
 
-#################### COMANDOS BÁSICOS ####################
+#################### BASIC COMMANDS ####################
 
 def subset(G, elements):
     return [[G[r][c] for c in elements] for r in elements]
@@ -423,7 +560,7 @@ def automorphism_group(G):
     return (Aut,D)
 
 
-#################### GENERADORES DE GRUPOS ####################
+#################### GENERATORS ####################
 
 def direct_product(A,B):
 
@@ -630,7 +767,7 @@ def generate_group_Dic(n):
     return G
 
 
-#################### MISCELÁNEA Y VISUALIZACIÓN ####################
+#################### VISUALIZATION AND RENAMING HELPERS ####################
 
 def print_group(G):
     for i in G:

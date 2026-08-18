@@ -30,20 +30,15 @@ rainbow = mcolors.LinearSegmentedColormap.from_list("rainbow", ["#FF0000","#FF91
 
 class Group:
 
-    def __init__(self, cayley, names=None):
+    def __init__(self, cayley, names=None, _skip_validation=False):
 
-        """
-        if type(cayley)!=list[list[int]]:
-            return ValueError("The group must be a list of lists of integers")
-        """
-
-        valid, message = is_group(cayley)
-
-        if not valid:
-            raise ValueError(message)
+        if not _skip_validation:
+            valid, message = is_group(cayley)
+            if not valid:
+                raise ValueError(message)
 
         if names is None:
-            names = [i for i in range(len(cayley))]
+            names = list(range(len(cayley)))
 
         if len(names) != len(cayley):
             raise ValueError("The number of names must match the group order")
@@ -60,6 +55,9 @@ class Group:
             G.append(g)
         s = str(G)
         return f"{G}"
+
+    def __truediv__(self, subgroup):
+        return self.quotient(subgroup)
 
     def _print_group(self):
         print(f"Group({self.cayley},{self.names})")
@@ -121,21 +119,40 @@ class Group:
         G = self.cayley
         E = self.names
         L = []
-        n = self.order()
-        for i in _graded_power_set_with_id(G):
-            ii = []
-            for j in i:
-                ii.append(E[j])
-            if form_subgroup(G,i):
-                L.append(Group(_reset_renaming(subset(G,i)),ii))         
+        
+        for idxs in _graded_power_set_with_id(G):
+            # 1. Comprobación rápida de clausura
+            if _is_closed_subset(G, idxs):
+                # 2. Construcción rápida omitiendo axiomas heredados
+                sub_names = [E[j] for j in idxs]
+                sub_matrix = _reset_renaming(subset(G, idxs))
+                
+                sub_grp = Group(sub_matrix, sub_names, _skip_validation=True)
+                L.append(Subgroup(sub_grp, self))
+                
         return L
 
     def subgroups(self):
-        G = self.cayley
-        S = self.proper_subgroups()[:]
-        S.insert(0,Group([[0]]))
-        S.append(self)
-        return S
+        # 1. Subgrupo trivial {e}
+        e_name = self.names[0]
+        trivial_grp = Group([[0]], [e_name])
+        trivial_subgroup = Subgroup(trivial_grp, self)
+
+        # 2. Subgrupos propios
+        subs = self.proper_subgroups()
+
+        # 3. Subgrupo total (el propio grupo G)
+        total_grp = Group(self.cayley, self.names)
+        total_subgroup = Subgroup(total_grp, self)
+
+        return [trivial_subgroup] + subs + [total_subgroup]
+
+    def normal_subgroups(self):
+        return [sub for sub in self.subgroups() if sub.is_normal()]
+
+    def is_simple(self):
+        normals = self.normal_subgroups()
+        return len(normals) == 2
 
     def cayley_table(self, title="", colormap=rainbow, names=None):
 
@@ -176,13 +193,169 @@ class Group:
     def delete_names(self):
         self.names = [i for i in range(len(self.cayley))]
 
+    def quotient(self, subgroup):
+        if not isinstance(subgroup, Subgroup):
+            raise TypeError("Argument must be an instance of Subgroup")
+        if subgroup.group is not self:
+            raise ValueError("The subgroup does not belong to this group")
+        return subgroup.quotient()
 
+    def is_automorphism(self, phi):
 
+        if not isinstance(phi, (tuple, list)):
+            return False
 
-#class Element:
+        n = self.order()
+        if len(phi) != n:
+            return False
+
+        # 1. Biyectividad (debe ser una permutación completa de los índices 0..n-1)
+        if set(phi) != set(range(n)):
+            return False
+
+        # 2. Conservación del elemento neutro (el índice 0)
+        if phi[0] != 0:
+            return False
+
+        # 3. Preservación de la operación: phi(a * b) == phi(a) * phi(b)
+        G = self.cayley
+        for i in range(n):
+            for j in range(n):
+                if phi[G[i][j]] != G[phi[i]][phi[j]]:
+                    return False
+
+        return True
+
+    def automorphisms(self):
+        n = self.order()
+        auts = []
+        for p in permutations(range(n)):
+            if self.is_automorphism(p):
+                auts.append(p)
+        return auts
+    
+    def automorphism_group(self):
+        auts = self.automorphisms()
+        n = len(auts)
+        dict_auts = {a: i for i, a in enumerate(auts)}
+
+        # Tabla de Cayley de Aut(G) mediante composición de permutaciones: (a o b)[x] = a[b[x]]
+        cayley_aut = []
+        for i in range(n):
+            row = []
+            a = auts[i]
+            for j in range(n):
+                b = auts[j]
+                comp = tuple(a[b[k]] for k in range(len(b)))
+                row.append(dict_auts[comp])
+            cayley_aut.append(row)
+
+        names_aut = [f"ϕ_{i}" for i in range(n)]
+        return Group(cayley_aut, names_aut, _skip_validation=True)
+
+class Subgroup(Group):
+
+    def __init__(self, subgroup, group):
+
+        if not isinstance(subgroup, Group) or not isinstance(group, Group):
+            raise ValueError("Both arguments must be instances of Group")
+
+        try:
+            subgroup_indices = [group.names.index(name) for name in subgroup.names]
+        except ValueError:
+            raise ValueError("All elements of subgroup must belong to group")
+
+        if not form_subgroup(group.cayley, subgroup_indices):
+            raise ValueError("The provided group is not a valid subgroup of the main group")
+
+        # Todo lo que se puede hacer con grupos ahora también con subgrupos.
+        super().__init__(subgroup.cayley, subgroup.names)
+
+        self.subgroup = subgroup
+        self.group = group
+        self.cayley = subgroup.cayley
+        self.names = subgroup.names
+        self.gcayley = group.cayley
+        self.gnames = group.names
+        self._indices = subgroup_indices
+
+    def __str__(self):
+        return str(self.subgroup)
+
+    def __truediv__(self, other):
+        """Permite usar la sintaxis natural G / H o H / H."""
+        return self.quotient()
+
+    def coset(self, element, side="left", return_names=True):
+        if side not in ("left", "right"):
+            raise ValueError("side must be either 'left' or 'right'")
+
+        # Buscar directamente la primera aparición del elemento en los nombres del grupo padre
+        try:
+            elem_idx = self.gnames.index(element)
+        except ValueError:
+            raise ValueError(f"Element '{element}' is not present in parent group names.")
+
+        coset_indices = []
+        for h in self._indices:
+            ah = self.gcayley[elem_idx][h] if side == "left" else self.gcayley[h][elem_idx]
+            if ah not in coset_indices:
+                coset_indices.append(ah)
+
+        coset_indices.sort()
+
+        if return_names:
+            return [self.gnames[i] for i in coset_indices]
+        return coset_indices
+
+    def is_normal(self):
+        for name in self.gnames:
+            left = self.coset(name, side="left", return_names=False)
+            right = self.coset(name, side="right", return_names=False)
+            if left != right:
+                return False
+        return True
+
+    def quotient(self):
+        """Calcula el grupo cociente G/H devolviendo una instancia de Group."""
+        if not self.is_normal():
+            raise ValueError("The subgroup must be normal to construct a quotient group.")
+
+        # 1. Obtener todas las clases laterales (cosets) únicas expresadas como listas de nombres
+        cosets = []
+        for name in self.gnames:
+            c = self.coset(name, side="left", return_names=True)
+            if c not in cosets:
+                cosets.append(c)
+
+        n_cosets = len(cosets)
+
+        # 2. Mapear cada elemento de G al índice de su clase lateral en 'cosets'
+        elem_to_coset = {}
+        for idx, c in enumerate(cosets):
+            for name in c:
+                elem_to_coset[name] = idx
+
+        # 3. Construir la tabla de Cayley del grupo cociente
+        quotient_cayley = []
+        for i, c1 in enumerate(cosets):
+            row = []
+            rep1_idx = self.gnames.index(c1[0])
+            for j, c2 in enumerate(cosets):
+                rep2_idx = self.gnames.index(c2[0])
+                # Producto en el grupo padre: g1 * g2
+                prod_idx = self.gcayley[rep1_idx][rep2_idx]
+                prod_name = self.gnames[prod_idx]
+                row.append(elem_to_coset[prod_name])
+            quotient_cayley.append(row)
+
+        # 4. Asignar nombres representativos a los cosets, p. ej. "{e, r}" o "gH"
+        quotient_names = [f"{{{','.join(str(e) for e in c)}}}" for c in cosets]
+
+        return Group(quotient_cayley, quotient_names, _skip_validation=True)
 
 #class Automorphism:
-    
+
 
 #################### HIDDEN COMMANDS ####################
 
@@ -208,115 +381,18 @@ def _sign(p):
 
     return 1 if inv % 2 == 0 else -1
 
-def _renaming_C(n):
-    r = []
-    if n >= 1:
-        r.append(r"$e$")
-        if n > 1:
-            r.append(r"$r$")
-            if n > 2:
-                for i in range(2, n):
-                    r.append(rf"$r^{{{i}}}$")
-    return r
+def _renamed_elements(G,L):
+    renamed_G = []
+    for I in G:
+        H = []
+        for i in I:
+            H.append(L[i])
+        renamed_G.append(H)
+    return renamed_G
 
-def _renaming_S(n):
-    """
-    Renombrado para S_n en notación de ciclos.
-    Coincide con el orden de elementos de generate_group_S(n).
-    """
-    def tuple_to_cycle(p):
-        visited = [False] * len(p)
-        cycles = []
-        for i in range(len(p)):
-            if not visited[i]:
-                curr = i
-                cycle = []
-                while not visited[curr]:
-                    visited[curr] = True
-                    cycle.append(curr + 1)  # Usamos representación 1-based (1..n)
-                    curr = p[curr]
-                if len(cycle) > 1:
-                    cycles.append("(" + "".join(map(str, cycle)) + ")")
-        return "".join(cycles) if cycles else "e"
-
-    perms = list(permutations(range(n)))
-    return [tuple_to_cycle(p) for p in perms]
-
-def _renaming_A(n):
-    """
-    Renombrado para A_n en notación de ciclos.
-    Coincide con el orden de elementos de generate_group_A(n).
-    """
-    def tuple_to_cycle(p):
-        visited = [False] * len(p)
-        cycles = []
-        for i in range(len(p)):
-            if not visited[i]:
-                curr = i
-                cycle = []
-                while not visited[curr]:
-                    visited[curr] = True
-                    cycle.append(curr + 1)
-                    curr = p[curr]
-                if len(cycle) > 1:
-                    cycles.append("(" + "".join(map(str, cycle)) + ")")
-        return "".join(cycles) if cycles else "e"
-
-    perms = [p for p in permutations(range(n)) if _sign(p) == 1]
-    return [tuple_to_cycle(p) for p in perms]
-
-def _renaming_D(n):
-    r = []
-    # Rotaciones
-    for k in range(n):
-        if k == 0:
-            r.append(r"$e$")
-        elif k == 1:
-            r.append(r"$r$")
-        else:
-            r.append(rf"$r^{{{k}}}$")
-            
-    # Reflexiones
-    for k in range(n):
-        if k == 0:
-            r.append(r"$s$")
-        elif k == 1:
-            r.append(r"$rs$")
-        else:
-            r.append(rf"$r^{{{k}}}s$")
-            
-    return r
-
-def _renaming_Q8():
-    return ["1","-1","i","-i","j","-j","k","-k"]
-
-def _renaming_U(n):
-    return [str(x) for x in range(1, n) if gcd(x, n) == 1]
-
-def _renaming_Dic(n):
-    names = []
-    for k in range(2 * n):
-        if k == 0:
-            names.append(r"$e$")
-        elif k == 1:
-            names.append(r"$a$")
-        else:
-            names.append(rf"$a^{{{k}}}$")
-    for k in range(2 * n):
-        if k == 0:
-            names.append(r"$x$")
-        elif k == 1:
-            names.append(r"$ax$")
-        else:
-            names.append(rf"$a^{{{k}}}x$")
-    return names
-
-def _reset_renaming(G):
-    l = get_elements(G)
-    D = {}
-    for i in range(len(l)):
-        D[l[i]]=i
-    return renamed_elements(G,D)
+def _get_elements(G):
+    # dict.fromkeys() elimina duplicados preservando el orden de aparición
+    return list(dict.fromkeys(e for fila in G for e in fila))
 
 def _min_div(n):
     for i in range(2, int(n**0.5) + 1):
@@ -327,7 +403,7 @@ def _min_div(n):
 def _power_set_with_id(G):
     n = order(G)
     m = _min_div(n)
-    lista = get_elements(G)
+    lista = _get_elements(G)
     e = identity(G)
     lista.remove(e)
     P = list(list(c) for c in chain.from_iterable(combinations(lista, r) for r in range(int(n/m))))
@@ -381,9 +457,18 @@ def _enumeration_dict(L):
         D[tuple(L[i])]=i
     return D
 
+def _is_closed_subset(G_cayley, indices):
+    """Comprueba clausura en O(|H|^2) usando un conjunto de índices."""
+    indices_set = set(indices)
+    for i in indices:
+        for j in indices:
+            if G_cayley[i][j] not in indices_set:
+                return False
+    return True
+
 def _cosets(G,H):
     C = []
-    for g in get_elements(G):
+    for g in _get_elements(G):
         gH = coset(G,H,g)
         if gH not in C:
             C.append(gH)
@@ -398,32 +483,6 @@ def _operate_cosets(G,C,A,B):
             r = i
             break
     return r
-
-
-#################### GENERAL COMMANDS ####################
-
-def renamed_elements(G,L):
-    renamed_G = []
-    for I in G:
-        H = []
-        for i in I:
-            H.append(L[i])
-        renamed_G.append(H)
-    return renamed_G
-
-def get_elements(G):
-    """
-    Devuelve una lista con todos los elementos/nombres únicos que aparecen
-    dentro de la tabla de Cayley G, conservando el orden de primera aparición.
-    
-    Parámetros:
-        G: Lista de listas que representa la tabla de Cayley.
-        
-    Devuelve:
-        Lista con los elementos únicos del grupo.
-    """
-    # dict.fromkeys() elimina duplicados preservando el orden de aparición
-    return list(dict.fromkeys(e for fila in G for e in fila))
 
 
 #################### BASIC COMMANDS ####################
@@ -451,7 +510,7 @@ def identity(G):
 
 def is_closed(tabla):
     n = len(tabla)
-    E = get_elements(tabla)
+    E = _get_elements(tabla)
     if len(E)!=n:
         return False
     for fila in tabla:
@@ -593,7 +652,7 @@ def proper_subgroups(G):
 def subgroups(G):
     S = proper_subgroups(G)[:]
     S.insert(0,[0])
-    S.append(get_elements(G))
+    S.append(_get_elements(G))
     return S
 
 def coset(G,H,element,side="left"):
@@ -609,7 +668,7 @@ def coset(G,H,element,side="left"):
 
 def is_normal(G,H):
     normal = True
-    for g in get_elements(G):
+    for g in _get_elements(G):
         if coset(G,H,g,side="left")!=coset(G,H,g,side="right"):
             normal=False
             break
@@ -623,7 +682,7 @@ def normal_subgroups(G):
     return NS
 
 def is_simple(G):
-    return normal_subgroups(G)==[[0],get_elements(G)]
+    return normal_subgroups(G)==[[0],_get_elements(G)]
 
 def quotient_group(G,H):
     C = _cosets(G,H)
@@ -718,7 +777,6 @@ def cyclic_group(n):
         for j in elements:
             g.append((i+j)%n)
         G.append(g)
-
     return Group(G,_renaming_C(n))
 
 def symmetric_group(n):
@@ -935,4 +993,114 @@ def cayley_table(G, title="", colormap=rainbow, names="", renaming=[]):
     plt.title(title)
     plt.tight_layout()
     plt.show()
+
+def _renaming_C(n):
+    r = []
+    if n >= 1:
+        r.append(r"$e$")
+        if n > 1:
+            r.append(r"$r$")
+            if n > 2:
+                for i in range(2, n):
+                    r.append(rf"$r^{{{i}}}$")
+    return r
+
+def _renaming_S(n):
+    """
+    Renombrado para S_n en notación de ciclos.
+    Coincide con el orden de elementos de generate_group_S(n).
+    """
+    def tuple_to_cycle(p):
+        visited = [False] * len(p)
+        cycles = []
+        for i in range(len(p)):
+            if not visited[i]:
+                curr = i
+                cycle = []
+                while not visited[curr]:
+                    visited[curr] = True
+                    cycle.append(curr + 1)  # Usamos representación 1-based (1..n)
+                    curr = p[curr]
+                if len(cycle) > 1:
+                    cycles.append("(" + "".join(map(str, cycle)) + ")")
+        return "".join(cycles) if cycles else "e"
+
+    perms = list(permutations(range(n)))
+    return [tuple_to_cycle(p) for p in perms]
+
+def _renaming_A(n):
+    """
+    Renombrado para A_n en notación de ciclos.
+    Coincide con el orden de elementos de generate_group_A(n).
+    """
+    def tuple_to_cycle(p):
+        visited = [False] * len(p)
+        cycles = []
+        for i in range(len(p)):
+            if not visited[i]:
+                curr = i
+                cycle = []
+                while not visited[curr]:
+                    visited[curr] = True
+                    cycle.append(curr + 1)
+                    curr = p[curr]
+                if len(cycle) > 1:
+                    cycles.append("(" + "".join(map(str, cycle)) + ")")
+        return "".join(cycles) if cycles else "e"
+
+    perms = [p for p in permutations(range(n)) if _sign(p) == 1]
+    return [tuple_to_cycle(p) for p in perms]
+
+def _renaming_D(n):
+    r = []
+    # Rotaciones
+    for k in range(n):
+        if k == 0:
+            r.append(r"$e$")
+        elif k == 1:
+            r.append(r"$r$")
+        else:
+            r.append(rf"$r^{{{k}}}$")
+            
+    # Reflexiones
+    for k in range(n):
+        if k == 0:
+            r.append(r"$s$")
+        elif k == 1:
+            r.append(r"$rs$")
+        else:
+            r.append(rf"$r^{{{k}}}s$")
+            
+    return r
+
+def _renaming_Q8():
+    return ["1","-1","i","-i","j","-j","k","-k"]
+
+def _renaming_U(n):
+    return [str(x) for x in range(1, n) if gcd(x, n) == 1]
+
+def _renaming_Dic(n):
+    names = []
+    for k in range(2 * n):
+        if k == 0:
+            names.append(r"$e$")
+        elif k == 1:
+            names.append(r"$a$")
+        else:
+            names.append(rf"$a^{{{k}}}$")
+    for k in range(2 * n):
+        if k == 0:
+            names.append(r"$x$")
+        elif k == 1:
+            names.append(r"$ax$")
+        else:
+            names.append(rf"$a^{{{k}}}x$")
+    return names
+
+def _reset_renaming(G):
+    l = _get_elements(G)
+    D = {}
+    for i in range(len(l)):
+        D[l[i]]=i
+    return _renamed_elements(G,D)
 

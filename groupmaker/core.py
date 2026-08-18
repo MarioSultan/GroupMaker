@@ -354,8 +354,6 @@ class Subgroup(Group):
 
         return Group(quotient_cayley, quotient_names, _skip_validation=True)
 
-#class Automorphism:
-
 
 #################### HIDDEN COMMANDS ####################
 

@@ -1,4 +1,4 @@
-# GroupMaker – v0.1.0
+# GroupMaker – v0.2.0
 
 ![GroupMaker Logo](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/logo.png)
 
@@ -50,7 +50,7 @@ and its Cayley table with:
 G.cayley_table()
 ```
 
-> The API is currently being migrated from a function-based interface to an object-oriented interface based on the `Group` class. Some functionality may therefore change during development.
+> The function-based interface will no longer be available in subsequent versions. For example, `G.order()` will soon completely replace `order(G)`.
 
 ---
 
@@ -58,12 +58,13 @@ G.cayley_table()
 
 GroupMaker is designed to provide tools for working with finite groups, including:
 
-* Construction and representation of finite groups.
-* Computation of Cayley tables.
+* Construction of finite groups.
+* Computation of Cayley tables with `matplotlib.pyplot`.
 * Determination of the order of a group.
 * Study of subgroups.
 * Detection of algebraic properties such as cyclicity and commutativity.
 * Computation and exploration of other structural properties of finite groups.
+* Other features like automorphism groups.
 
 The available functionality will expand as the project develops.
 
@@ -71,9 +72,7 @@ The available functionality will expand as the project develops.
 
 ## Documentation
 
-The documentation is currently being developed alongside the new object-oriented API.
-
-Detailed documentation will be available in the [`docs`](docs/) directory.
+Detailed documentation is available in the [`docs`](docs/) directory. The documentation is developed alongside the library.
 
 ---
 
@@ -81,16 +80,12 @@ Detailed documentation will be available in the [`docs`](docs/) directory.
 
 GroupMaker is currently under active development.
 
-The project is undergoing a transition from a collection of functions to an object-oriented interface centred around the `Group` class.
+The project has successfully transitioned to an object-oriented interface centered around the `Group` class. The legacy function-based interface is now deprecated and will be removed in future versions.
 
-The API should therefore be considered **unstable** until the `1.0.0` release.
-
-Breaking changes may occur between development versions.
+The API should therefore be considered **unstable** until the `1.0.0` release, and breaking changes may occur between development versions.
 
 ---
 
 ## Contributing
 
-Contributions, suggestions, and bug reports are welcome.
-
-If you find a bug or have an idea for improving GroupMaker, please open an issue in the GitHub repository.
+Contributions, suggestions, and bug reports are welcome. If you find a bug or have an idea for improving GroupMaker, please open an issue in the GitHub repository.

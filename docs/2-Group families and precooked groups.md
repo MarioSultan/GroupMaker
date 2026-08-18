@@ -152,7 +152,7 @@ from groupmaker.precooked import *
 Since precooked groups are instances of the `Group` class, all standard methods and visual representations work out of the box:
 
 ```python
-from groupmaker.precooked import Q8, V4, C6, D3
+from groupmaker.precooked import Q8, V4, C4, D3
 
 # Inspect Quaternion Group Q8
 print("Q8 order:", Q8.order())           # 8

@@ -13,7 +13,7 @@
 import  numpy               as      np
 import  matplotlib.pyplot   as      plt
 import  matplotlib.colors   as      mcolors
-from    itertools           import  permutations, combinations
+from    itertools           import  permutations, combinations, product
 from    collections         import  Counter
 from    math                import  gcd
 
@@ -256,13 +256,17 @@ class Group:
     def automorphisms(self):
         n = self.order()
         auts = []
-        for p in permutations(range(n)):
-            if self.is_automorphism(p):
-                auts.append(p)
+        orders = self.element_orders()[:]
+        for p in _order_preserving_permutations(orders):
+            try:
+                auts.append(Automorphism(p,self))
+            except:
+                pass
+
         return auts
     
     def automorphism_group(self):
-        auts = self.automorphisms()
+        auts = [i.phi for i in self.automorphisms()]
         n = len(auts)
         dict_auts = {a: i for i, a in enumerate(auts)}
 
@@ -277,7 +281,7 @@ class Group:
                 row.append(dict_auts[comp])
             cayley_aut.append(row)
 
-        names_aut = [f"ϕ_{i}" for i in range(n)]
+        names_aut = [str(auts[i]) for i in range(n)]
         return Group(cayley_aut, names_aut, _skip_validation=True)
 
 class Subgroup(Group):
@@ -440,9 +444,41 @@ class Element:
                 break
         return Element(inv,self.group)
 
-#class Automorphism:
+class Automorphism:
 
-#class AutomorphismFunction:
+    def __init__(self,phi:tuple,group:Group):
+
+        if not group.is_automorphism(phi):
+            raise ValueError("The tuple phi has to be an automorphism of G.")
+
+        self.phi = phi
+        self.group = group
+
+    def __len__(self):
+        return len(self.phi)
+
+    def __str__(self):
+        return str(self.phi)
+
+class AutomorphismFunction:
+
+    def __init__(self,function:list,group:Group):
+        f = []
+        for i in function:
+            if type(i)==Automorphism:
+                f.append(i.phi)
+            elif type(i)==tuple:
+                if not group.is_automorphism(i):
+                    raise ValueError("The transformation is not a valid automorfism for this group.")
+                f.append(i)
+            else:
+                raise TypeError("The argument must be a list of a Automorphisms or tuples.")
+            
+        self.phi = f
+        self.group = group
+
+    def __str__(self):
+        return str(self.phi)
 
 
 #################### HIDDEN COMMANDS ####################
@@ -671,6 +707,24 @@ def _operate_cosets(G,C,A,B):
             break
     return r
 
+def _order_preserving_permutations(orders):
+
+    classes = {}
+
+    for i, order in enumerate(orders):
+        classes.setdefault(order, []).append(i)
+
+    classes = list(classes.values())
+
+    for perms in product(*(permutations(c) for c in classes)):
+        result = list(range(len(orders)))
+
+        for domain, image in zip(classes, perms):
+            for x, y in zip(domain, image):
+                result[x] = y
+
+        yield tuple(result)
+
 
 #################### PRODUCTS ####################
 
@@ -701,6 +755,31 @@ def direct_power(G:Group,n):
     for i in range(n-1):
         H = direct_product(H,G)
     return H
+
+def semidirect_product(A: Group, B: Group, f: AutomorphismFunction):
+    G = []
+    n, m = A.order(), B.order()
+
+    phi_list = f.phi if hasattr(f, "phi") else f
+
+    for a1 in range(n):
+        for b1 in range(m):
+            g = []
+            phi_b1 = phi_list[b1]
+            for a2 in range(n):
+                for b2 in range(m):
+                    a2_trans = phi_b1[a2]
+                    a_prod = A.cayley[a1][a2_trans]
+                    b_prod = B.cayley[b1][b2]
+                    g.append(a_prod * m + b_prod)
+            G.append(g)
+
+    names = []
+    for a in range(n):
+        for b in range(m):
+            names.append(str(A.names[a]) + "," + str(B.names[b]))
+
+    return Group(G, names, _skip_validation=True)
 
 
 #################### GENERATORS ####################

@@ -1,4 +1,4 @@
-# GroupMaker – v0.2.0
+# GroupMaker – v0.3.0
 
 ![GroupMaker Logo](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/logo.png)
 
@@ -28,13 +28,13 @@ Alternatively, you can visit https://github.com/MarioSultan/GroupMaker and downl
 ## Examples
 
 ### Cayley table of $S_3$
-![S3 table](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/cayley_S3.png)
+![S3 table](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/imgs/cayley_S3.png)
 
 ### Cayley table of $A_5\times C_4$
-![A4xC3 table](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/cayley_A4xC3.png)
+![A4xC3 table](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/imgs/cayley_A4xC3.png)
 
 ### Cayley table of $U_{1200}$
-![U1200 table](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/cayley_U1200.png)
+![U1200 table](https://raw.githubusercontent.com/MarioSultan/GroupMaker/main/imgs/cayley_U1200.png)
 
 
 ---

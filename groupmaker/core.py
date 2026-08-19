@@ -1,11 +1,11 @@
-#————————————————————————————————————————————————————————————#
-#                                                            #
-#                        GroupMaker                          #
-#          A Python library for finite group theory          #
-#                                                            #
-#                  by: Mario Sultan Romero                   #
-#                                                            #
-#————————————————————————————————————————————————————————————#
+# ———————————————————————————————————————————————————————————— #
+#                                                              #
+#                         GroupMaker                           #
+#           A Python library for finite group theory           #
+#                                                              #
+#                   by: Mario Sultan Romero                    #
+#                                                              #
+# ———————————————————————————————————————————————————————————— #
 
 
 #################### IMPORTS ####################
@@ -13,7 +13,7 @@
 import  numpy               as      np
 import  matplotlib.pyplot   as      plt
 import  matplotlib.colors   as      mcolors
-from    itertools           import  permutations, chain, combinations, product
+from    itertools           import  permutations, combinations
 from    collections         import  Counter
 from    math                import  gcd
 
@@ -33,7 +33,7 @@ class Group:
     def __init__(self, cayley, names=None, _skip_validation=False):
 
         if not _skip_validation:
-            valid, message = is_group(cayley)
+            valid, message = _is_group(cayley)
             if not valid:
                 raise ValueError(message)
 
@@ -46,6 +46,8 @@ class Group:
         self.cayley = cayley
         self.names = names
 
+    #–> DUNDERS 
+
     def __str__(self):
         G = []
         for i in range(self.order()):
@@ -56,8 +58,22 @@ class Group:
         s = str(G)
         return f"{G}"
 
+    def __len__(self):
+        return self.order()
+
+    def __contains__(self, element):
+        return element in self.names
+
+    def __mul__(self, other):
+        return direct_product(self,other)
+
+    def __pow__(self, n):
+        return direct_power(self,n)
+
     def __truediv__(self, subgroup):
         return self.quotient(subgroup)
+
+    #–> BASIC METHODS 
 
     def _print_group(self):
         print(f"Group({self.cayley},{self.names})")
@@ -79,7 +95,7 @@ class Group:
             if ok:
                 neutro = e
                 break
-        return neutro
+        return self.names[neutro]
 
     def element_orders(self):
         O = []
@@ -115,6 +131,54 @@ class Group:
     def is_abelian(self):
         return self.order()==len(self.center())
 
+    def cayley_table(self, title="", colormap=rainbow, names=None):
+
+        if names==None:
+            if len(self.cayley)<=20:
+                names=True
+            else:
+                names=False
+
+
+        elements = range(len(self.cayley))
+        fig, ax = plt.subplots(figsize=(6, 5))
+        im = ax.imshow(self.cayley, cmap=colormap)
+        ax.xaxis.tick_top()
+
+        if names:
+            ax.set_xticks(np.arange(len(elements)))
+            ax.set_yticks(np.arange(len(elements)))
+            ax.set_xticklabels(self.names)
+            ax.set_yticklabels(self.names)
+        else:
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+
+        if names:
+            for i in range(len(elements)):
+                for j in range(len(elements)):
+                    color_texto = "black"
+                    ax.text(
+                        i,
+                        j,
+                        f"{self.names[self.cayley[j][i]]}",
+                        ha="center",
+                        va="center",
+                        color=color_texto,
+                        fontsize=12,
+                    )
+        
+        plt.title(title)
+        plt.tight_layout()
+        plt.show()
+
+    def delete_names(self):
+        self.names = [i for i in range(len(self.cayley))]
+
+    #–> SUBGROUPS 
+
     def proper_subgroups(self):
         G = self.cayley
         E = self.names
@@ -125,7 +189,7 @@ class Group:
             if _is_closed_subset(G, idxs):
                 # 2. Construcción rápida omitiendo axiomas heredados
                 sub_names = [E[j] for j in idxs]
-                sub_matrix = _reset_renaming(subset(G, idxs))
+                sub_matrix = _reset_renaming(_subset(G, idxs))
                 
                 sub_grp = Group(sub_matrix, sub_names, _skip_validation=True)
                 L.append(Subgroup(sub_grp, self))
@@ -154,51 +218,14 @@ class Group:
         normals = self.normal_subgroups()
         return len(normals) == 2
 
-    def cayley_table(self, title="", colormap=rainbow, names=None):
-
-        if names==None:
-            if len(self.cayley)<=20:
-                names=True
-            else:
-                names=False
-
-
-        elements = range(len(self.cayley))
-        fig, ax = plt.subplots(figsize=(6, 5))
-        im = ax.imshow(self.cayley, cmap=colormap)
-        ax.set_xticks(np.arange(len(elements)))
-        ax.set_yticks(np.arange(len(elements)))
-        ax.set_xticklabels(self.names)
-        ax.set_yticklabels(self.names)
-        ax.xaxis.tick_top()
-        
-        if names:
-            for i in range(len(elements)):
-                for j in range(len(elements)):
-                    color_texto = "black"
-                    ax.text(
-                        i,
-                        j,
-                        f"{self.names[self.cayley[j][i]]}",
-                        ha="center",
-                        va="center",
-                        color=color_texto,
-                        fontsize=12,
-                    )
-        
-        plt.title(title)
-        plt.tight_layout()
-        plt.show()
-
-    def delete_names(self):
-        self.names = [i for i in range(len(self.cayley))]
-
     def quotient(self, subgroup):
         if not isinstance(subgroup, Subgroup):
             raise TypeError("Argument must be an instance of Subgroup")
         if subgroup.group is not self:
             raise ValueError("The subgroup does not belong to this group")
         return subgroup.quotient()
+
+    #–> AUTOMORPHISMS 
 
     def is_automorphism(self, phi):
 
@@ -255,7 +282,7 @@ class Group:
 
 class Subgroup(Group):
 
-    def __init__(self, subgroup, group):
+    def __init__(self, subgroup:Group, group:Group):
 
         if not isinstance(subgroup, Group) or not isinstance(group, Group):
             raise ValueError("Both arguments must be instances of Group")
@@ -265,7 +292,7 @@ class Subgroup(Group):
         except ValueError:
             raise ValueError("All elements of subgroup must belong to group")
 
-        if not form_subgroup(group.cayley, subgroup_indices):
+        if not _form_subgroup(group.cayley, subgroup_indices):
             raise ValueError("The provided group is not a valid subgroup of the main group")
 
         # Todo lo que se puede hacer con grupos ahora también con subgrupos.
@@ -279,12 +306,19 @@ class Subgroup(Group):
         self.gnames = group.names
         self._indices = subgroup_indices
 
-    def __str__(self):
-        return str(self.subgroup)
+    #–> DUNDERS 
 
     def __truediv__(self, other):
         """Permite usar la sintaxis natural G / H o H / H."""
         return self.quotient()
+
+    def __le__(self, group):
+        return group==self.group
+
+    def __lt__(self, group):
+        return group==self.group and self.subgroup.order()<self.group.order()
+
+    #–> QUOTIENTS 
 
     def coset(self, element, side="left", return_names=True):
         if side not in ("left", "right"):
@@ -354,6 +388,62 @@ class Subgroup(Group):
 
         return Group(quotient_cayley, quotient_names, _skip_validation=True)
 
+class Element:
+
+    def __init__(self,element,group):
+
+        if not element in group:
+            raise ValueError("The element must belong to the group.")
+
+        self.element = element
+        self.group = group
+        self.index = group.names.index(element)
+
+    #–> DUNDERS 
+
+    def __str__(self):
+        return self.element
+
+    def __mul__(self, other):
+        return Element(self.group.names[self.group.cayley[self.index][other.index]],self.group)
+
+    def __pow__(self,k):
+        if type(k)!=int:
+            raise ValueError("n must be an integer")
+        if k==1:
+            return self
+        elif k>1:
+            p = self
+            for i in range(k-1):
+                p = p * self
+            return p
+        elif k==0:
+            return Element(self.group.identity(),self.group)
+        elif k==-1:
+            return self.inverse()
+        elif k<-1:
+            p = self.inverse()
+            for i in range(k-1):
+                p = p * self
+            return p
+
+    def __eq__(self,other):
+        return self.element==other.element and self.group==other.group
+
+    #–> OTHER FUNCTIONS 
+
+    def inverse(self):
+        inv = None
+        for i in self.group.names:
+            if self*Element(i,self.group)==Element(self.group.identity(),self.group):
+                inv = i
+                break
+        return Element(inv,self.group)
+
+#class Automorphism:
+
+#class AutomorphismFunction:
+
 
 #################### HIDDEN COMMANDS ####################
 
@@ -363,150 +453,7 @@ def _obtener_nombre(var_obj):
             return nombre
     return None
 
-def _sign(p):
-    """
-    Devuelve:
-        1  -> permutación par
-       -1  -> permutación impar
-    """
-    inv = 0
-    n = len(p)
-
-    for i in range(n):
-        for j in range(i+1, n):
-            if p[i] > p[j]:
-                inv += 1
-
-    return 1 if inv % 2 == 0 else -1
-
-def _renamed_elements(G,L):
-    renamed_G = []
-    for I in G:
-        H = []
-        for i in I:
-            H.append(L[i])
-        renamed_G.append(H)
-    return renamed_G
-
-def _get_elements(G):
-    # dict.fromkeys() elimina duplicados preservando el orden de aparición
-    return list(dict.fromkeys(e for fila in G for e in fila))
-
-def _min_div(n):
-    for i in range(2, int(n**0.5) + 1):
-        if n % i == 0:
-            return i
-    return n
-
-def _power_set_with_id(G):
-    n = order(G)
-    m = _min_div(n)
-    lista = _get_elements(G)
-    e = identity(G)
-    lista.remove(e)
-    P = list(list(c) for c in chain.from_iterable(combinations(lista, r) for r in range(int(n/m))))
-    for i in range(len(P)):
-        P[i].insert(0,e)
-        #P[i] = sorted(P[i])
-    return P
-
-def _graded_power_set_with_id(G):
-
-    # Principios
-    n = order(G)
-    m = _min_div(n)
-    e = identity(G)
-    orders = compute_orders(G)
-
-    # Posibles órdenes de subgrupos (Lagrange)
-    R = []
-    for r in range(int(n/m)):
-        if n%(r+1)==0:
-            R.append(r+1)
-    #R.append(n)
-
-    Rm = []
-    for r in R[1:]:
-        Rm.append(r-1)
-
-    P = []
-
-    # Bucle principal
-    for rm in Rm:
-        E = []
-        for el in range(1,n):
-            if (rm+1)%orders[el]==0:
-                E.append(el)
-
-        for c in list(combinations(E, rm)):
-            P.append(sorted([e]+list(c)))
-
-    return P
-
-def _operate_automorphisms(a,b):
-    aob = []
-    for x in b:
-        aob.append(a[x])
-    return tuple(aob)
-
-def _enumeration_dict(L):
-    D = {}
-    for i in range(len(L)):
-        D[tuple(L[i])]=i
-    return D
-
-def _is_closed_subset(G_cayley, indices):
-    """Comprueba clausura en O(|H|^2) usando un conjunto de índices."""
-    indices_set = set(indices)
-    for i in indices:
-        for j in indices:
-            if G_cayley[i][j] not in indices_set:
-                return False
-    return True
-
-def _cosets(G,H):
-    C = []
-    for g in _get_elements(G):
-        gH = coset(G,H,g)
-        if gH not in C:
-            C.append(gH)
-    return C
-
-def _operate_cosets(G,C,A,B):
-    a = A[0]
-    b = B[0]
-    g = G[a][b]
-    for i in C:
-        if g in i:
-            r = i
-            break
-    return r
-
-
-#################### BASIC COMMANDS ####################
-
-def subset(G, elements):
-    return [[G[r][c] for c in elements] for r in elements]
-
-def identity(G):
-    neutro = None
-    for e in range(order(G)):
-        ok = True
-        for a in range(order(G)):
-            if G[e][a] != a:
-                ok = False
-                break
-            if G[a][e] != a:
-                ok = False
-                break
-        if ok:
-            neutro = e
-            break
-    if neutro is None:
-        return (False,"IndentityError – no identity element found")
-    return neutro
-
-def is_closed(tabla):
+def _is_closed(tabla):
     n = len(tabla)
     E = _get_elements(tabla)
     if len(E)!=n:
@@ -516,7 +463,7 @@ def is_closed(tabla):
             return False
     return True
 
-def is_group(tabla):
+def _is_group(tabla):
     n = len(tabla)
 
     # 1. Clausura
@@ -585,170 +532,151 @@ def is_group(tabla):
 
     return (True,"G is a group")
 
-def order(G):
-    if is_group(G)[0]:
-        return len(G)
-    else:
-        raise ValueError("El argumento introducido no es un grupo")
-
-def compute_orders(G):
-
-    if not is_group(G)[0]:
-        raise TypeError
-
-    O = []
-    for i in range(len(G)):
-        ik = G[i][i]
-        o = 1
-        while i!=ik:
-            ik = G[ik][i]
-            o+=1
-        O.append(o)
-
-    return O
-
-def count_orders(G):
-    l = sorted(compute_orders(G))
-    return dict(Counter(l))
-
-def is_cyclic(G):
-    if is_group(G)[0]:
-        return order(G) in compute_orders(G)
-    else:
-        raise ValueError("El argumento introducido no es un grupo")
-
-def center(G):
-    if not is_group(G)[0]:
-        raise ValueError("El argumento introducido no es un grupo")
-    Z = []
-    for i in range(len(G)):
-        r = True
-        for j in range(len(G)):
-            if G[i][j]!=G[j][i]:
-                r = False
+def _identity(G):
+    neutro = None
+    for e in range(len(G)):
+        ok = True
+        for a in range(len(G)):
+            if G[e][a] != a:
+                ok = False
                 break
-        if r:
-            Z.append(i)
-    return(Z)
-
-def is_abelian(G):
-    return order(G)==len(center(G))
-
-def form_subgroup(G,elements):
-    # Por propiedades de los subgrupos, solo hace falta comprobar la clausura, el resto se heredan del grupo principal.
-    return is_closed(_reset_renaming(subset(G,elements)))
-
-def proper_subgroups(G):
-    L = []
-    n = order(G)
-    for i in _graded_power_set_with_id(G):
-        if form_subgroup(G,i):
-            L.append(i)   
-    #L.append(list(range(n)))       
-    return L
-
-def subgroups(G):
-    S = proper_subgroups(G)[:]
-    S.insert(0,[0])
-    S.append(_get_elements(G))
-    return S
-
-def coset(G,H,element,side="left"):
-    L = []
-    for h in H:
-        if side=="left":
-            ah = G[element][h]
-        elif side=="right":
-            ah = G[h][element]
-        if ah not in L:
-            L.append(ah)
-    return sorted(L)
-
-def is_normal(G,H):
-    normal = True
-    for g in _get_elements(G):
-        if coset(G,H,g,side="left")!=coset(G,H,g,side="right"):
-            normal=False
+            if G[a][e] != a:
+                ok = False
+                break
+        if ok:
+            neutro = e
             break
-    return normal
+    if neutro is None:
+        return (False,"IndentityError – no identity element found")
+    return neutro
 
-def normal_subgroups(G):
-    NS = []
-    for H in subgroups(G):
-        if is_normal(G,H):
-            NS.append(H)
-    return NS
+def _subset(G, elements):
+    return [[G[r][c] for c in elements] for r in elements]
 
-def is_simple(G):
-    return normal_subgroups(G)==[[0],_get_elements(G)]
+def _form_subgroup(G,elements):
+    # Por propiedades de los subgrupos, solo hace falta comprobar la clausura, el resto se heredan del grupo principal.
+    return _is_closed(_reset_renaming(_subset(G,elements)))
 
-def quotient_group(G,H):
-    C = _cosets(G,H)
-    D = _enumeration_dict(C)
-    Q = []
-    for i in range(len(C)):
-        A = []
-        for j in range(len(C)):
-            A.append(D[tuple(_operate_cosets(G,C,C[i],C[j]))])
-        Q.append(A)
-    return (Q,D)
+def _sign(p):
+    """
+    Devuelve:
+        1  -> permutación par
+       -1  -> permutación impar
+    """
+    inv = 0
+    n = len(p)
 
-def is_automorphism(G,φ):
-    # a es una n-tupla
-    n = len(φ)
-    if not is_group(G):
-        raise TypeError ("The first argument is not a group")
-    if type(φ)!=tuple:
-        raise TypeError ("The second argument is not a tuple")
-    
-    # Biyectividad
     for i in range(n):
-        if i not in φ:
-            return False
+        for j in range(i+1, n):
+            if p[i] > p[j]:
+                inv += 1
 
-    #Elemento neutro
-    if φ[0]!=0:
-        return False
+    return 1 if inv % 2 == 0 else -1
 
-    #Preservación de la LCI
-    for i in range(len(G)):
-        for j in range(len(G)):
-            if G[φ[i]][φ[j]]!=φ[G[i][j]]:
-                return False
+def _renamed_elements(G,L):
+    renamed_G = []
+    for I in G:
+        H = []
+        for i in I:
+            H.append(L[i])
+        renamed_G.append(H)
+    return renamed_G
+
+def _get_elements(G):
+    """
+    Devuelve una lista con todos los elementos/nombres únicos que aparecen
+    dentro de la tabla de Cayley G, conservando el orden de primera aparición.
     
+    Parámetros:
+        G: Lista de listas que representa la tabla de Cayley.
+        
+    Devuelve:
+        Lista con los elementos únicos del grupo.
+    """
+    # dict.fromkeys() elimina duplicados preservando el orden de aparición
+    return list(dict.fromkeys(e for fila in G for e in fila))
+
+def _min_div(n):
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return i
+    return n
+
+def _graded_power_set_with_id(G):
+
+    # Principios
+    n = len(G)
+    m = _min_div(n)
+    e = _identity(G)
+
+    def compute_orders(G):
+
+        if not _is_group(G)[0]:
+            raise TypeError
+
+        O = []
+        for i in range(len(G)):
+            ik = G[i][i]
+            o = 1
+            while i!=ik:
+                ik = G[ik][i]
+                o+=1
+            O.append(o)
+
+        return O
+
+    orders = compute_orders(G)
+
+    # Posibles órdenes de subgrupos (Lagrange)
+    R = []
+    for r in range(int(n/m)):
+        if n%(r+1)==0:
+            R.append(r+1)
+    #R.append(n)
+
+    Rm = []
+    for r in R[1:]:
+        Rm.append(r-1)
+
+    P = []
+
+    # Bucle principal
+    for rm in Rm:
+        E = []
+        for el in range(1,n):
+            if (rm+1)%orders[el]==0:
+                E.append(el)
+
+        for c in list(combinations(E, rm)):
+            P.append(sorted([e]+list(c)))
+
+    return P
+
+def _is_closed_subset(G_cayley, indices):
+    """Comprueba clausura en O(|H|^2) usando un conjunto de índices."""
+    indices_set = set(indices)
+    for i in indices:
+        for j in indices:
+            if G_cayley[i][j] not in indices_set:
+                return False
     return True
 
-def automorphisms(G):
-    g = tuple(range(len(G)))
-    Auts = []
-    for φ in permutations(g):
-        if is_automorphism(G,φ):
-            Auts.append(φ)
-    return Auts
-
-def automorphism_group(G):
-    auts = automorphisms(G)
-    n = len(auts)
-    D = _enumeration_dict(auts)
-    Aut = []
-    for i in range(n):
-        a = []
-        for j in range(n):
-            a.append(D[_operate_automorphisms(auts[i],auts[j])])
-        Aut.append(a)
-    return (Aut,D)
+def _operate_cosets(G,C,A,B):
+    a = A[0]
+    b = B[0]
+    g = G[a][b]
+    for i in C:
+        if g in i:
+            r = i
+            break
+    return r
 
 
-#################### GENERATORS ####################
+#################### PRODUCTS ####################
 
-def direct_product(A,B):
-
-    if (not is_group(A)[0]) or (not is_group(B)[0]):
-        raise TypeError
-
+def direct_product(A:Group,B:Group):
     G = []
-
-    n, m = len(A), len(B)
+    n, m = A.order(), B.order()
 
     for a1 in range(n):
         for b1 in range(m):
@@ -756,16 +684,26 @@ def direct_product(A,B):
             for a2 in range(n):
                 for b2 in range(m):
                     x2 = (a1,b1)
-                    g.append( (A[a1][a2])*len(B)+(B[b1][b2]) )
+                    g.append( (A.cayley[a1][a2])*m+(B.cayley[b1][b2]) )
             G.append(g)
 
-    return G
+    names = []
+    for a in range(n):
+        for b in range(m):
+            names.append(str(A.names[a])+","+str(B.names[b]))
 
-def direct_power(G,n):
-    H = [[0]]
-    for i in range(n):
+    return Group(G,names,_skip_validation=True)
+
+def direct_power(G:Group,n):
+    if n<2:
+        raise ValueError("n must be at least 2")
+    H = G
+    for i in range(n-1):
         H = direct_product(H,G)
     return H
+
+
+#################### GENERATORS ####################
 
 def cyclic_group(n):
     elements = range(n)
@@ -941,14 +879,26 @@ def dicyclic_group(n):
         
     return Group(G,_renaming_Dic(n))
 
+def tetrahedral_group():
+    """
+    Full symmetry group of the tetrahedron. Isomorphic to S₄.
+    """
+    return Group(symmetric_group(4).cayley)
+
+def octahedral_group():
+    """
+    Full symmetry group of the cube/octahedron. Isomorphic to S₄ × C₂.
+    """
+    return Group((symmetric_group(4) * cyclic_group(2)).cayley)
+
+def icosahedral_group():
+    """
+    Full symmetry group of the icosahedron/dodecahedron. Isomorphic to A₅ × C₂.
+    """
+    return Group((alternating_group(5) * cyclic_group(2)).cayley)
+
 
 #################### VISUALIZATION AND RENAMING HELPERS ####################
-
-def print_group(G):
-    for i in G:
-        for j in i:
-            print(j,end="\t")
-        print()
 
 def cayley_table(G, title="", colormap=rainbow, names="", renaming=[]):
     if title=="":

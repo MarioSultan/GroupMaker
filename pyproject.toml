@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GroupsMath"            # Nombre en PyPI (ej: mi-paquete)
+version = "0.1.0"
+description = "The educational Python library for Group Theory"
+readme = "README.md"                  # Esta será la documentación visible en la portada de PyPI
+requires-python = ">=3.8"
+license = {text = "PolyForm Strict License 1.0.0."}
+
+authors = [
+  { name = "Mario Sultan Romero", email = "mariosultan.uem@gmail.com" }
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+# Enlaces que aparecerán en la barra lateral de tu paquete en PyPI
+[project.urls]
+Homepage = "https://github.com/MarioSultan/GroupsMath"  #Nombre actual del repositorio (voy a cambiarlo en breve)
+Documentation = "https://github.com/MarioSultan/GroupsMath/tree/main/docs" # <-- Enlace a tu carpeta docs
+Issues = "https://github.com/MarioSultan/GroupsMath/issues"
+
+# Configuración cuando NO usas la carpeta src/
+[tool.setuptools.packages.find]
+where = ["."]                          # Busca paquetes Python en la raíz del proyecto

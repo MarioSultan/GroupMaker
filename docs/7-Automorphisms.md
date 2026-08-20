@@ -1,10 +1,10 @@
 # Automorphisms
 
-In **GroupMaker**, automorphisms are represented as permutations of the elements of a group. The library provides tools to test whether a permutation is an automorphism, compute all automorphisms of a finite group, construct the automorphism group $\operatorname{Aut}(G)$, and represent automorphisms and actions between groups using the `Automorphism` and `AutomorphismFunction` classes.
+In **GroupsMath**, automorphisms are represented as permutations of the elements of a group. The library provides tools to test whether a permutation is an automorphism, compute all automorphisms of a finite group, construct the automorphism group $\text{Aut}(G)$, and represent automorphisms and actions between groups using the `Automorphism` and `AutomorphismFunction` classes.
 
 ---
 
-## Automorphisms in GroupMaker
+## Automorphisms in GroupsMath
 
 Mathematically, an automorphism of a group $G$ is an isomorphism from the group to itself:
 
@@ -20,7 +20,7 @@ $$
 
 for every $a,b\in G$.
 
-Since every finite group in GroupMaker is internally represented by indices
+Since every finite group in GroupsMath is internally represented by indices
 
 $$
 0,1,\dots,n-1,
@@ -69,7 +69,7 @@ The transformation must satisfy the following conditions:
 2. It must preserve the identity element.
 3. It must preserve the group operation.
 
-In other words, GroupMaker verifies that
+In other words, GroupsMath verifies that
 
 $$
 \varphi(a\ast b)=\varphi(a)\ast\varphi(b)
@@ -80,7 +80,7 @@ for every pair of elements of the group.
 For example:
 
 ```python
-from groupmaker.precooked import C4
+from groupsmath.precooked import C4
 
 phi = (0, 3, 2, 1)
 
@@ -133,8 +133,8 @@ where:
 For example:
 
 ```python
-from groupmaker import Automorphism
-from groupmaker.precooked import C4
+from groupsmath import Automorphism
+from groupsmath.precooked import C4
 
 phi = (0, 3, 2, 1)
 
@@ -181,7 +181,7 @@ This method returns a list of `Automorphism` objects.
 For example:
 
 ```python
-from groupmaker.precooked import C4
+from groupsmath.precooked import C4
 
 auts = C4.automorphisms()
 
@@ -223,7 +223,7 @@ $$
 \{\varphi:G\to G\mid\varphi\text{ is an automorphism}\}.
 $$
 
-In GroupMaker, this group can be constructed using:
+In GroupsMath, this group can be constructed using:
 
 ```python
 G.automorphism_group()
@@ -232,14 +232,14 @@ G.automorphism_group()
 For example:
 
 ```python
-from groupmaker.precooked import C4
+from groupsmath.precooked import C4
 
 AutC4 = C4.automorphism_group()
 ```
 
-The result is a standard `Group` object.
+The result is a standard `CayleyGroup` object.
 
-Therefore, all ordinary `Group` methods can also be used with an automorphism group:
+Therefore, all ordinary `CayleyGroup` methods can also be used with an automorphism group:
 
 ```python
 AutC4.order()
@@ -249,7 +249,7 @@ AutC4.cayley_table()
 AutC4.subgroups()
 ```
 
-This makes $\text{Aut}(G)$ behave computationally exactly like any other group created in GroupMaker.
+This makes $\text{Aut}(G)$ behave computationally exactly like any other group created in GroupsMath.
 
 
 ---
@@ -276,8 +276,8 @@ where:
 For example:
 
 ```python
-from groupmaker import AutomorphismFunction
-from groupmaker.precooked import C4
+from groupsmath import AutomorphismFunction
+from groupsmath.precooked import C4
 
 f = AutomorphismFunction(
     [
@@ -325,13 +325,13 @@ Both representations can be mixed inside the list.
 
 ## Important notes
 
-* Automorphisms in GroupMaker are represented internally using indices, not the visible names in `G.names`.
+* Automorphisms in GroupsMath are represented internally using indices, not the visible names in `G.names`.
 
 * The tuple `(0, 1, ..., n-1)` represents the identity automorphism.
 
 * `G.automorphisms()` returns a list of `Automorphism` objects.
 
-* `G.automorphism_group()` returns a standard `Group` object representing $\text{Aut}(G)$.
+* `G.automorphism_group()` returns a standard `CayleyGroup` object representing $\text{Aut}(G)$.
 
 * The group operation in $\text{Aut}(G)$ is composition of automorphisms.
 
@@ -346,7 +346,7 @@ Both representations can be mixed inside the list.
 The following example computes all automorphisms of a group, constructs its automorphism group, and studies some of its properties:
 
 ```python
-from groupmaker.precooked import C4
+from groupsmath.precooked import C4
 
 # Compute all automorphisms
 auts = C4.automorphisms()
@@ -366,6 +366,6 @@ print("Is abelian?", AutC4.is_abelian())
 AutC4.cayley_table()
 ```
 
-Since `AutC4` is itself a `Group`, it can be studied using the same methods as every other group in the library.
+Since `AutC4` is itself a `CayleyGroup`, it can be studied using the same methods as every other group in the library.
 
-This illustrates a general idea used throughout GroupMaker: algebraic objects constructed from other algebraic objects can themselves be represented and manipulated using the same general `Group` interface.
+This illustrates a general idea used throughout GroupsMath: algebraic objects constructed from other algebraic objects can themselves be represented and manipulated using the same general `CayleyGroup` interface.

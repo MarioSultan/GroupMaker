@@ -1,8 +1,8 @@
 # Products of groups
 
-In **GroupMaker**, new groups can be constructed from existing ones using group product constructions. The library supports **direct products**, **direct powers**, and **semidirect products**.
+In **GroupsMath**, new groups can be constructed from existing ones using group product constructions. The library supports **direct products**, **direct powers**, and **semidirect products**.
 
-Because product groups in GroupMaker return standard instances of the `Group` class, all regular group properties and methods—such as `.order()`, `.is_abelian()`, `.subgroups()`, and `.cayley_table()`—apply to them directly.
+Because product groups in GroupsMath return standard instances of the `CayleyGroup` class, all regular group properties and methods such as `.order()`, `.is_abelian()`, `.subgroups()`, and `.cayley_table()` apply to them directly.
 
 ---
 
@@ -14,11 +14,11 @@ $$
 (a_1, b_1) \ast (a_2, b_2) = (a_1 a_2, b_1 b_2)
 $$
 
-In GroupMaker, the direct product can be constructed using the function `direct_product(A, B)` or using the standard multiplication operator `*`:
+In GroupsMath, the direct product can be constructed using the function `direct_product(A, B)` or using the standard multiplication operator `*`:
 
 ```python
-from groupmaker import direct_product
-from groupmaker.precooked import C2, C3
+from groupsmath import direct_product
+from groupsmath.precooked import C2, C3
 
 # Using the function
 G = direct_product(C2, C3)
@@ -34,7 +34,7 @@ The resulting group has order $|A| \times |B|$.
 The names of the elements in $A \times B$ are formed by joining the corresponding element names of $A$ and $B$ with a comma:
 
 ```python
-from groupmaker.precooked import C2, C3
+from groupsmath.precooked import C2, C3
 
 G = C2 * C3
 print(G.names)
@@ -51,11 +51,11 @@ $$
 G^n = \underbrace{G \times G \times \dots \times G}_{n \text{ times}}
 $$
 
-In GroupMaker, direct powers can be constructed using the function `direct_power(G, n)` or using the exponentiation operator `**`:
+In GroupsMath, direct powers can be constructed using the function `direct_power(G, n)` or using the exponentiation operator `**`:
 
 ```python
-from groupmaker import direct_power
-from groupmaker.precooked import C2
+from groupsmath import direct_power
+from groupsmath.precooked import C2
 
 # Using the function
 G3 = direct_power(C2, 3)
@@ -69,7 +69,7 @@ The integer exponent $n$ must be at least $2$. Attempting to compute `G ** 1` or
 For example, the Klein four-group $V_4$ is isomorphic to $C_2 \times C_2$:
 
 ```python
-from groupmaker.precooked import C2
+from groupsmath.precooked import C2
 
 V4_alt = C2 ** 2
 
@@ -92,9 +92,9 @@ $$
 
 Here, $A$ is a normal subgroup of $A \rtimes_\phi B$.
 
-### Construction in GroupMaker: `semidirect_product(A, B, f)`
+### Construction in GroupsMath: `semidirect_product(A, B, f)`
 
-To construct a semidirect product in GroupMaker, you must specify:
+To construct a semidirect product in GroupsMath, you must specify:
 
 1. `A`: The normal group $A$.
 2. `B`: The acting group $B$.
@@ -116,8 +116,8 @@ The dihedral group $D_3$ (of order 6) can be constructed as a semidirect product
 * For element $1 \in C_2$ (generator): map to the inversion automorphism $(0, 2, 1)$ of $C_3$.
 
 ```python
-from groupmaker import semidirect_product, AutomorphismFunction
-from groupmaker.precooked import C3, C2
+from groupsmath import semidirect_product, AutomorphismFunction
+from groupsmath.precooked import C3, C2
 
 # Define automorphisms of C3
 id_aut = (0, 1, 2)   # Identity automorphism: r -> r
@@ -140,10 +140,10 @@ print("Element names:", D3_constructed.names)
 
 ## Properties of Product Groups
 
-Since products in GroupMaker return standard `Group` instances, all analysis tools apply seamlessly:
+Since products in GroupsMath return standard `CayleyGroup` instances, all analysis tools apply seamlessly:
 
 ```python
-from groupmaker.precooked import C2, C3
+from groupsmath.precooked import C2, C3
 
 G = C2 * C3
 

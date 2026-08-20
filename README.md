@@ -86,7 +86,7 @@ The GroupsMath team is currently working on theese ideas:
 
 ## Documentation
 
-Detailed documentation is available in the [`docs`](https://raw.githubusercontent.com/MarioSultan/GroupsMath/tree/main/docs) directory. The documentation is developed alongside the library.
+Detailed documentation is available in the [`docs`](https://github.com/MarioSultan/GroupsMath/tree/main/docs) directory of GitHub. The documentation is developed alongside the library.
 
 ---
 

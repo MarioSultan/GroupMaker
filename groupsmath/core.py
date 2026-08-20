@@ -21,7 +21,7 @@ from    abc                 import  abstractmethod, ABC
 
 #################### DEFINITIONS ####################
 
-__version__ = "0.3.0"
+__version__ = "0.4.1"
 
 tgl_color = "#2A646E"
 white = mcolors.LinearSegmentedColormap.from_list("white", ["white", "white"])

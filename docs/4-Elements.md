@@ -1,6 +1,6 @@
 # Elements
 
-In **GroupMaker**, individual elements of a finite group can be represented explicitly using the `Element` class. While a `Group` object describes the complete algebraic structure through its Cayley table, an `Element` object represents one particular element together with the group to which it belongs.
+In **GroupsMath**, individual elements of a finite group can be represented explicitly using the `Element` class. While a `CayleyGroup` object describes the complete algebraic structure through its Cayley table, an `Element` object represents one particular element together with the group to which it belongs.
 
 The `Element` class allows group elements to be multiplied, raised to integer powers, inverted, and compared using a natural Python syntax.
 
@@ -17,24 +17,24 @@ Element(element, group)
 where:
 
 * `element` is the name of an element belonging to the group.
-* `group` is an instance of the `Group` class.
+* `group` is an instance of the `CayleyGroup` class.
 
 For example:
 
 ```python
-from groupmaker import Element
-from groupmaker.precooked import C4
+from groupsmath import Element
+from groupsmath.precooked import C4
 
 r = Element("$r$", C4)
 ```
 
-The constructor checks that the provided element belongs to the group. If it does not, GroupMaker raises a `ValueError`. For example, `x = Element("x", C4)` raises an error because `"x"` is not an element of `C4`.
+The constructor checks that the provided element belongs to the group. If it does not, GroupsMath raises a `ValueError`. For example, `x = Element("x", C4)` raises an error because `"x"` is not an element of `C4`.
 
 ---
 
 ## Internal representation
 
-When an `Element` object is created, GroupMaker stores both the visible element name and its internal index.
+When an `Element` object is created, GroupsMath stores both the visible element name and its internal index.
 
 For example:
 
@@ -139,8 +139,8 @@ The comparison does not only depend on the visible element name. The group is al
 The following example illustrates the main functionality of the `Element` class:
 
 ```python
-from groupmaker import Element
-from groupmaker.precooked import C4
+from groupsmath import Element
+from groupsmath.precooked import C4
 
 # Create an element
 r = Element("$r$", C4)
@@ -169,4 +169,4 @@ print(rinv)
 print(r * rinv == Element("$e$", C4))
 ```
 
-The `Element` class provides a direct object-oriented way of working with individual elements of a finite group. Instead of manually accessing entries of a Cayley table, group operations can be written using familiar algebraic notation such as: `a * b` and `a ** n` while the underlying computations are still performed entirely from the Cayley table of the associated `Group`.
+The `Element` class provides a direct object-oriented way of working with individual elements of a finite group. Instead of manually accessing entries of a Cayley table, group operations can be written using familiar algebraic notation such as: `a * b` and `a ** n` while the underlying computations are still performed entirely from the Cayley table of the associated `CayleyGroup`.

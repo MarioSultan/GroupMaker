@@ -1,4 +1,4 @@
-# GroupsMath – v0.4.0
+# GroupsMath – v0.4.1
 
 ![GroupsMath Logo](https://raw.githubusercontent.com/MarioSultan/GroupsMath/main/logo.png)
 

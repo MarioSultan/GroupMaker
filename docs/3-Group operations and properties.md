@@ -273,7 +273,7 @@ C4.automorphisms()
 # [(0, 1, 2, 3), (0, 3, 2, 1)]
 ```
 
-Finally, the automorphism group $\operatorname{Aut}(G)$ can be constructed using:
+Finally, the automorphism group $\text{Aut}(G)$ can be constructed using:
 
 ```python
 G.automorphism_group()

@@ -1,8 +1,8 @@
 # Cayley table visualization
 
-GroupMaker allows you to visualize the Cayley table of any `Group` object using `matplotlib.pyplot`.
+GroupsMath allows you to visualize the Cayley table of any `CayleyGroup` object using `matplotlib.pyplot`.
 
-The Cayley table contains the result of the group operation for every ordered pair of elements. GroupMaker provides a dedicated method for displaying this information graphically.
+The Cayley table contains the result of the group operation for every ordered pair of elements. GroupsMath provides a dedicated method for displaying this information graphically.
 
 ---
 
@@ -17,7 +17,7 @@ G.cayley_table()
 For example:
 
 ```python
-from groupmaker.precooked import S3
+from groupsmath.precooked import S3
 
 S3.cayley_table()
 ```
@@ -60,7 +60,7 @@ or:
 S3.cayley_table(colormap="coolwarm")
 ```
 
-GroupMaker also provides predefined colormaps, including: `rainbow`, `tgl` and `white`. The colormap `rainbow` is the default used by the method. Therefore, the following call:
+GroupsMath also provides predefined colormaps, including: `rainbow`, `tgl` and `white`. The colormap `rainbow` is the default used by the method. Therefore, the following call:
 
 ```python
 S3.cayley_table()
@@ -101,7 +101,7 @@ S4.cayley_table(names=False)
 This can be useful when working with larger groups.
 
 
-> By default, **GroupMaker** automatically decides whether the element names should be written inside the cells. If the order of the group is at most $20$, the names are displayed. If the group has more than $20$ elements, they are hidden. This behavior can always be overridden manually writing `names=True` or `names=False`.
+> By default, **GroupsMath** automatically decides whether the element names should be written inside the cells. If the order of the group is at most $20$, the names are displayed. If the group has more than $20$ elements, they are hidden. This behavior can always be overridden manually writing `names=True` or `names=False`.
 
 ---
 
@@ -110,7 +110,7 @@ This can be useful when working with larger groups.
 The visualization always uses the names stored in `G.names` for the labels of the rows and columns. For example, consider:
 
 ```python
-G = Group(
+G = CayleyGroup(
     [[0, 1], [1, 0]],
     names=["e", "a"]
 )
@@ -136,7 +136,7 @@ and these names will automatically be used when plotting `C5.cayley_table()`.
 A simple Cayley table:
 
 ```python
-from groupmaker.precooked import C4
+from groupsmath.precooked import C4
 
 C4.cayley_table()
 ```
@@ -144,7 +144,7 @@ C4.cayley_table()
 A table with a custom title:
 
 ```python
-from groupmaker.precooked import D4
+from groupsmath.precooked import D4
 
 D4.cayley_table(title="Symmetries of a square")
 ```
@@ -152,7 +152,7 @@ D4.cayley_table(title="Symmetries of a square")
 A table using a different colormap:
 
 ```python
-from groupmaker.precooked import Q8
+from groupsmath.precooked import Q8
 
 Q8.cayley_table(
     title="Quaternion group Q8",
@@ -163,7 +163,7 @@ Q8.cayley_table(
 A compact table without displaying the results inside each cell:
 
 ```python
-from groupmaker.precooked import S4
+from groupsmath.precooked import S4
 
 S4.cayley_table(
     title="Cayley table of S4",

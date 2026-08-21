@@ -30,7 +30,23 @@ rainbow = mcolors.LinearSegmentedColormap.from_list("rainbow", ["#FF0000","#FF91
 rainbow8 = mcolors.LinearSegmentedColormap.from_list("rainbow8", ["#FF0000","#FF9100","#F2DA00","#2CDB00","#00DAE9","#1869FF","#7648FF","#FF1FF4"])
 
 def info():
-    print("GroupsMath v"+__version__)
+    print("———————————————————————————————————————————————————————————————————————————")
+    print("                                                                           ")
+    print("                          > GroupsMath v"+__version__+"                              ")
+    print("              The educational Python library for Group Theory              ")
+    print("                                                                           ")
+    print("GroupsMath is a Python module for constructing, studying, and manipulating ")
+    print("finite groups. The project aims to provide a simple and intuitive interface")
+    print("for working with finite groups and their algebraic properties.             ")
+    print("                                                                           ")
+    print("You can view all the information of the proyect in PyPI and GitHub:        ")
+    print("· PyPI https://pypi.org/project/GroupsMath/                                ")
+    print("· GitHub https://github.com/MarioSultan/GroupsMath                         ")
+    print("                                                                           ")
+    print("The documentation of this library is in the following link:                ")
+    print("· Documentation https://github.com/MarioSultan/GroupsMath/tree/main/docs   ")
+    print("                                                                           ")
+    print("———————————————————————————————————————————————————————————————————————————")
 
 
 #################### GROUP CLASS ####################
@@ -51,23 +67,164 @@ class Group(ABC):
     def inverse(self, a):
         pass
 
-class CayleyGroup(Group):
+class ExplicitGroup(Group):
 
-    def __init__(self, cayley, names=None, _skip_validation=False):
+    def __init__(self, elements, function, _skip_validation=False):
+
+        if type(elements)!=list:
+            raise ValueError("The first argument of a ExplicitGroup instance must be a list")
 
         if not _skip_validation:
-            valid, message = _is_group(cayley)
+            valid, message = _check_explicit_group(elements,function)
             if not valid:
                 raise ValueError(message)
 
-        if names is None:
-            names = list(range(len(cayley)))
+        self.elements = elements
+        self.function = function
 
-        if len(names) != len(cayley):
-            raise ValueError("The number of names must match the group order")
+    #–> DUNDERS 
+
+    def __str__(self):
+        return str(self.toCayleyGroup())
+    
+    def __len__(self):
+        return len(self.elements)
+    
+    def __contains__(self, element):
+        return element in self.elements
+    
+    def __mul__(self, other):
+        return direct_product(self.toCayleyGroup(),other.toCayleyGroup()).toExplicitGroup()
+    
+    def __pow__(self, n):
+        return direct_power(self.toCayleyGroup(),n).toExplicitGroup()
+    
+    def __truediv__(self, subgroup):
+        return self.toCayleyGroup().quotient(subgroup.toCayleyGroup()).toExplicitGroup()
+
+    #–> TRANSFORMING METHODS 
+
+    def toCayleyGroup(self):
+        idx = {elem: i for i, elem in enumerate(self.elements)}
+        cayley = [[idx[self.function(a, b)] for b in self.elements] for a in self.elements]
+        return CayleyGroup(cayley, self.elements, _skip_validation=True)
+
+    #–> GROUP METHODS 
+    
+    def operation(self, a, b):
+        return self.function(self.elements[a],self.elements[b])
+
+    def identity(self):
+        neutro = None
+        for e in range(self.order()):
+            ok = True
+            for a in range(self.order()):
+                if self.function(e,a) != a:
+                    ok = False
+                    break
+                if self.function(e,a) != a:
+                    ok = False
+                    break
+            if ok:
+                neutro = e
+                break
+        return neutro
+
+    def inverse(self, a):
+        e = self.identity()
+        inv = None
+        for i in self.order():
+            if self.function(a,i)==e:
+                inv = i
+                break
+        return inv
+
+    #–> BASIC METHODS 
+
+    def order(self):
+        return len(self.elements)
+
+    def element_orders(self):
+        O = []
+        for i in range(len(self.elements)):
+            ik = self.function(self.elements[i],self.elements[i])
+            o = 1
+            while i!=ik:
+                ik = self.function(self.elements[ik],self.elements[i])
+                o+=1
+            O.append(o)
+        return O
+
+    def order_distribution(self):
+        l = sorted(self.element_orders())
+        return dict(Counter(l))
+
+    def is_cyclic(self):
+        return self.order() in self.element_orders()
+
+    def center(self):
+        Z = []
+        for i in self.elements:
+            r = True
+            for j in self.elements:
+                if self.function(i,j)!=self.function(j,i):
+                    r = False
+                    break
+            if r:
+                Z.append(i)
+        return(Z)
+
+    def is_abelian(self):
+        return self.order()==len(self.center())
+
+    def cayley_table(self, title="", colormap=rainbow, names=None):
+        return self.toCayleyGroup().cayley_table(self, title=title, colormap=colormap, names=names)
+
+    #–> SUBGROUPS 
+
+    def proper_subgroups(self):             # PROGRAMAR
+        return self.toCayleyGroup().proper_subgroups()
+
+    def subgroups(self):                    # PROGRAMAR
+        return self.toCayleyGroup().subgroups()
+
+    def normal_subgroups(self):             # PROGRAMAR
+        return self.toCayleyGroup().normal_subgroups()
+
+    def is_simple(self):                    # PROGRAMAR
+        return self.toCayleyGroup().is_simple()
+
+    def quotient(self, subgroup):           # PROGRAMAR
+        return self.toCayleyGroup().quotient(subgroup.toCayleyGroup())
+
+    #–> AUTOMORPHISMS 
+
+    def is_automorphism(self, phi):
+        return self.toCayleyGroup().is_automorphism(phi)
+
+    def automorphisms(self):
+        return self.toCayleyGroup().automorphisms()
+    
+    def automorphism_group(self):           # REVISAR (Aunque seguramente se quede así)
+        return self.toCayleyGroup().automorphism_group().toExplicitGroup()
+
+class CayleyGroup(Group):
+
+    def __init__(self, cayley, elements=None, _skip_validation=False):
+
+        if not _skip_validation:
+            valid, message = _check_cayley_group(cayley)
+            if not valid:
+                raise ValueError(message)
+
+        if elements is None:
+            elements = list(range(len(cayley)))
+
+        if len(elements) != len(cayley):
+            raise ValueError("The number of elements must match the group order")
 
         self.cayley = cayley
-        self.names = names
+        self.elements = elements
 
     #–> DUNDERS 
 
@@ -76,7 +233,7 @@ class CayleyGroup(Group):
         for i in range(self.order()):
             g = []
             for j in range(self.order()):
-                g.append(self.names[self.cayley[i][j]])
+                g.append(self.elements[self.cayley[i][j]])
             G.append(g)
         s = str(G)
         return f"{G}"
@@ -85,7 +242,7 @@ class CayleyGroup(Group):
         return self.order()
 
     def __contains__(self, element):
-        return element in self.names
+        return element in self.elements
 
     def __mul__(self, other):
         return direct_product(self,other)
@@ -96,6 +253,14 @@ class CayleyGroup(Group):
     def __truediv__(self, subgroup):
         return self.quotient(subgroup)
 
+    #–> TRANSFORMING METHODS 
+
+    def toExplicitGroup(self):
+        idx = {elem: i for i, elem in enumerate(self.elements)}
+        def op(a, b):
+            return self.elements[self.cayley[idx[a]][idx[b]]]
+        return ExplicitGroup(list(self.elements), op, _skip_validation=True)
+    
     #–> GROUP METHODS 
 
     def operation(self, a, b):
@@ -129,7 +294,7 @@ class CayleyGroup(Group):
     #–> BASIC METHODS 
 
     def _print_group(self):
-        print(f"CayleyGroup({self.cayley},{self.names})")
+        print(f"CayleyGroup({self.cayley},{self.elements})")
 
     def order(self):
         return len(self.cayley)
@@ -182,11 +347,13 @@ class CayleyGroup(Group):
         im = ax.imshow(self.cayley, cmap=colormap)
         ax.xaxis.tick_top()
 
+        names_in_axis = [f"${i}$" for i in self.elements]
+
         if names:
             ax.set_xticks(np.arange(len(elements)))
             ax.set_yticks(np.arange(len(elements)))
-            ax.set_xticklabels(self.names)
-            ax.set_yticklabels(self.names)
+            ax.set_xticklabels(names_in_axis)
+            ax.set_yticklabels(names_in_axis)
         else:
             ax.set_xticks([])
             ax.set_yticks([])
@@ -200,7 +367,7 @@ class CayleyGroup(Group):
                     ax.text(
                         i,
                         j,
-                        f"{self.names[self.cayley[j][i]]}",
+                        f"${self.elements[self.cayley[j][i]]}$",
                         ha="center",
                         va="center",
                         color=color_texto,
@@ -212,13 +379,13 @@ class CayleyGroup(Group):
         plt.show()
 
     def delete_names(self):
-        self.names = [i for i in range(len(self.cayley))]
+        self.elements = [i for i in range(len(self.elements))]
 
     #–> SUBGROUPS 
 
     def proper_subgroups(self):
         G = self.cayley
-        E = self.names
+        E = self.elements
         L = []
         
         for idxs in _graded_power_set_with_id(G):
@@ -235,7 +402,7 @@ class CayleyGroup(Group):
 
     def subgroups(self):
         # 1. Subgrupo trivial {e}
-        e_name = self.names[0]
+        e_name = self.elements[0]
         trivial_grp = CayleyGroup([[0]], [e_name])
         trivial_subgroup = CayleySubgroup(trivial_grp, self)
 
@@ -243,7 +410,7 @@ class CayleyGroup(Group):
         subs = self.proper_subgroups()
 
         # 3. Subgrupo total (el propio grupo G)
-        total_grp = CayleyGroup(self.cayley, self.names)
+        total_grp = CayleyGroup(self.cayley, self.elements)
         total_subgroup = CayleySubgroup(total_grp, self)
 
         return [trivial_subgroup] + subs + [total_subgroup]
@@ -321,6 +488,8 @@ class CayleyGroup(Group):
         names_aut = [str(auts[i]) for i in range(n)]
         return CayleyGroup(cayley_aut, names_aut, _skip_validation=True)
 
+#class MatrixGroup(Group)
+
 class Subgroup(ABC):
     pass
 
@@ -332,7 +501,7 @@ class CayleySubgroup(CayleyGroup, Subgroup):
             raise ValueError("Both arguments must be instances of CayleyGroup")
 
         try:
-            subgroup_indices = [group.names.index(name) for name in subgroup.names]
+            subgroup_indices = [group.elements.index(name) for name in subgroup.elements]
         except ValueError:
             raise ValueError("All elements of subgroup must belong to group")
 
@@ -340,14 +509,14 @@ class CayleySubgroup(CayleyGroup, Subgroup):
             raise ValueError("The provided group is not a valid subgroup of the main group")
 
         # Todo lo que se puede hacer con grupos ahora también con subgrupos.
-        super().__init__(subgroup.cayley, subgroup.names)
+        super().__init__(subgroup.cayley, subgroup.elements)
 
         self.subgroup = subgroup
         self.group = group
         self.cayley = subgroup.cayley
-        self.names = subgroup.names
+        self.elements = subgroup.elements
         self.gcayley = group.cayley
-        self.gnames = group.names
+        self.gelements = group.elements
         self._indices = subgroup_indices
 
     #–> DUNDERS 
@@ -370,7 +539,7 @@ class CayleySubgroup(CayleyGroup, Subgroup):
 
         # Buscar directamente la primera aparición del elemento en los nombres del grupo padre
         try:
-            elem_idx = self.gnames.index(element)
+            elem_idx = self.gelements.index(element)
         except ValueError:
             raise ValueError(f"Element '{element}' is not present in parent group names.")
 
@@ -383,11 +552,11 @@ class CayleySubgroup(CayleyGroup, Subgroup):
         coset_indices.sort()
 
         if return_names:
-            return [self.gnames[i] for i in coset_indices]
+            return [self.gelements[i] for i in coset_indices]
         return coset_indices
 
     def is_normal(self):
-        for name in self.gnames:
+        for name in self.gelements:
             left = self.coset(name, side="left", return_names=False)
             right = self.coset(name, side="right", return_names=False)
             if left != right:
@@ -401,7 +570,7 @@ class CayleySubgroup(CayleyGroup, Subgroup):
 
         # 1. Obtener todas las clases laterales (cosets) únicas expresadas como listas de nombres
         cosets = []
-        for name in self.gnames:
+        for name in self.gelements:
             c = self.coset(name, side="left", return_names=True)
             if c not in cosets:
                 cosets.append(c)
@@ -418,12 +587,12 @@ class CayleySubgroup(CayleyGroup, Subgroup):
         quotient_cayley = []
         for i, c1 in enumerate(cosets):
             row = []
-            rep1_idx = self.gnames.index(c1[0])
+            rep1_idx = self.gelements.index(c1[0])
             for j, c2 in enumerate(cosets):
-                rep2_idx = self.gnames.index(c2[0])
+                rep2_idx = self.gelements.index(c2[0])
                 # Producto en el grupo padre: g1 * g2
                 prod_idx = self.gcayley[rep1_idx][rep2_idx]
-                prod_name = self.gnames[prod_idx]
+                prod_name = self.gelements[prod_idx]
                 row.append(elem_to_coset[prod_name])
             quotient_cayley.append(row)
 
@@ -431,6 +600,10 @@ class CayleySubgroup(CayleyGroup, Subgroup):
         quotient_names = [f"{{{','.join(str(e) for e in c)}}}" for c in cosets]
 
         return CayleyGroup(quotient_cayley, quotient_names, _skip_validation=True)
+
+#class ExplicitSubgroup(ExplicitGroup, Subgroup)
+
+#class MatrixSubgroup(MatrixGroup, Subgroup)
 
 class Element:
 
@@ -444,7 +617,7 @@ class Element:
 
         self.element = element
         self.group = group
-        self.index = group.names.index(element)
+        self.index = group.elements.index(element)
 
     #–> DUNDERS 
 
@@ -452,7 +625,7 @@ class Element:
         return self.element
 
     def __mul__(self, other):
-        return Element(self.group.names[self.group.cayley[self.index][other.index]],self.group)
+        return Element(self.group.elements[self.group.cayley[self.index][other.index]],self.group)
 
     def __pow__(self,k):
         if type(k)!=int:
@@ -481,8 +654,8 @@ class Element:
 
     def inverse(self):
         inv = None
-        for i in self.group.names:
-            if self*Element(i,self.group)==Element(self.group.names[self.group.identity()],self.group):
+        for i in self.group.elements:
+            if self*Element(i,self.group)==Element(self.group.elements[self.group.identity()],self.group):
                 inv = i
                 break
         return Element(inv,self.group)
@@ -542,7 +715,7 @@ def _is_closed(tabla):
             return False
     return True
 
-def _is_group(tabla):
+def _check_cayley_group(tabla):
     n = len(tabla)
 
     # 1. Clausura
@@ -610,6 +783,67 @@ def _is_group(tabla):
                     return (False,f"AssociativityError – ({a},{b},{c})")
 
     return (True,"G is a group")
+
+def _check_explicit_group(elements: list, operation) -> tuple[bool, str]:
+    n = len(elements)
+    if n == 0:
+        return False, "EmptySetError – Group cannot be empty"
+
+    # Mapeo rápido elemento -> índice en O(1) para evitar .index()
+    elem_to_idx = {elem: i for i, elem in enumerate(elements)}
+    
+    if len(elem_to_idx) != n:
+        return False, "DuplicateElementError – Elements must be unique"
+
+    # 1. CLAUSURA Y TABULACIÓN RÁPIDA O(n²)
+    # Guardamos los resultados como índices para acelerar la comprobación de asociatividad
+    cayley_indices = [[0] * n for _ in range(n)]
+    
+    for i in range(n):
+        a = elements[i]
+        for j in range(n):
+            res = operation(a, elements[j])
+            if res not in elem_to_idx:
+                return False, f"ClosureError – Result of operation({a}, {elements[j]}) is not in group"
+            cayley_indices[i][j] = elem_to_idx[res]
+
+    # 2. ELEMENTO NEUTRO O(n)
+    identity_idx = None
+    for e_idx in range(n):
+        is_identity = True
+        for a_idx in range(n):
+            # e * a == a y a * e == a
+            if cayley_indices[e_idx][a_idx] != a_idx or cayley_indices[a_idx][e_idx] != a_idx:
+                is_identity = False
+                break
+        if is_identity:
+            identity_idx = e_idx
+            break
+
+    if identity_idx is None:
+        return False, "IdentityError – No neutral element found"
+
+    # 3. ELEMENTOS INVERSOS O(n²)
+    for a_idx in range(n):
+        has_inverse = False
+        for b_idx in range(n):
+            if cayley_indices[a_idx][b_idx] == identity_idx and cayley_indices[b_idx][a_idx] == identity_idx:
+                has_inverse = True
+                break
+        if not has_inverse:
+            return False, f"InverseError – Element '{elements[a_idx]}' has no inverse"
+
+    # 4. ASOCIATIVIDAD O(n³)
+    # Se evalúa al final porque es el paso más costoso.
+    for a in range(n):
+        for b in range(n):
+            ab = cayley_indices[a][b]
+            for c in range(n):
+                # (a * b) * c == a * (b * c)
+                if cayley_indices[ab][c] != cayley_indices[a][cayley_indices[b][c]]:
+                    return False, f"AssociativityError – Failed for elements ({elements[a]}, {elements[b]}, {elements[c]})"
+
+    return True, "Valid Group"
 
 def _identity(G):
     neutro = None
@@ -690,7 +924,7 @@ def _graded_power_set_with_id(G):
 
     def compute_orders(G):
 
-        if not _is_group(G)[0]:
+        if not _check_cayley_group(G)[0]:
             raise TypeError
 
         O = []
@@ -787,7 +1021,7 @@ def direct_product(A:CayleyGroup,B:CayleyGroup):
     names = []
     for a in range(n):
         for b in range(m):
-            names.append(str(A.names[a])+","+str(B.names[b]))
+            names.append(str(A.elements[a])+","+str(B.elements[b]))
 
     return CayleyGroup(G,names,_skip_validation=True)
 
@@ -820,7 +1054,7 @@ def semidirect_product(A: CayleyGroup, B: CayleyGroup, f: AutomorphismFunction):
     names = []
     for a in range(n):
         for b in range(m):
-            names.append(str(A.names[a]) + "," + str(B.names[b]))
+            names.append(str(A.elements[a]) + "," + str(B.elements[b]))
 
     return CayleyGroup(G, names, _skip_validation=True)
 
@@ -835,7 +1069,7 @@ def cyclic_group(n):
         for j in elements:
             g.append((i+j)%n)
         G.append(g)
-    return CayleyGroup(G,_renaming_C(n))
+    return CayleyGroup(G,_renaming_C(n),_skip_validation=True)
 
 def symmetric_group(n):
 
@@ -854,7 +1088,7 @@ def symmetric_group(n):
             fila.append(index[tuple(p[i] for i in q)])
         G.append(fila)
 
-    return CayleyGroup(G,_renaming_S(n))
+    return CayleyGroup(G,_renaming_S(n),_skip_validation=True)
 
 def alternating_group(n):
 
@@ -870,7 +1104,7 @@ def alternating_group(n):
             fila.append(index[tuple(p[i] for i in q)])
         G.append(fila)
 
-    return CayleyGroup(G,_renaming_A(n))
+    return CayleyGroup(G,_renaming_A(n),_skip_validation=True)
 
 def dihedric_group(n):
 
@@ -894,7 +1128,7 @@ def dihedric_group(n):
 
         G.append(fila)
 
-    return CayleyGroup(G,_renaming_D(n))
+    return CayleyGroup(G,_renaming_D(n),_skip_validation=True)
 
 def quaternion_group():
 
@@ -949,7 +1183,7 @@ def quaternion_group():
 
         G.append(fila)
 
-    return CayleyGroup(G,_renaming_Q8())
+    return CayleyGroup(G,_renaming_Q8(),_skip_validation=True)
 
 def units_group(n):
 
@@ -966,7 +1200,7 @@ def units_group(n):
             fila.append(index[(a * b) % n])
         G.append(fila)
         
-    return CayleyGroup(G,_renaming_U(n))
+    return CayleyGroup(G,_renaming_U(n),_skip_validation=True)
 
 def dicyclic_group(n):
     """
@@ -999,25 +1233,25 @@ def dicyclic_group(n):
             fila.append(index[(m, c)])
         G.append(fila)
         
-    return CayleyGroup(G,_renaming_Dic(n))
+    return CayleyGroup(G,_renaming_Dic(n),_skip_validation=True)
 
 def tetrahedral_group():
     """
     Full symmetry group of the tetrahedron. Isomorphic to S₄.
     """
-    return CayleyGroup(symmetric_group(4).cayley)
+    return CayleyGroup(symmetric_group(4).cayley,_skip_validation=True)
 
 def octahedral_group():
     """
     Full symmetry group of the cube/octahedron. Isomorphic to S₄ × C₂.
     """
-    return CayleyGroup((symmetric_group(4) * cyclic_group(2)).cayley)
+    return CayleyGroup((symmetric_group(4) * cyclic_group(2)).cayley,_skip_validation=True)
 
 def icosahedral_group():
     """
     Full symmetry group of the icosahedron/dodecahedron. Isomorphic to A₅ × C₂.
     """
-    return CayleyGroup((alternating_group(5) * cyclic_group(2)).cayley)
+    return CayleyGroup((alternating_group(5) * cyclic_group(2)).cayley,_skip_validation=True)
 
 
 #################### VISUALIZATION AND RENAMING HELPERS ####################
@@ -1067,12 +1301,12 @@ def cayley_table(G, title="", colormap=rainbow, names="", renaming=[]):
 def _renaming_C(n):
     r = []
     if n >= 1:
-        r.append(r"$e$")
+        r.append(r"e")
         if n > 1:
-            r.append(r"$r$")
+            r.append(r"r")
             if n > 2:
                 for i in range(2, n):
-                    r.append(rf"$r^{{{i}}}$")
+                    r.append(rf"r^{{{i}}}")
     return r
 
 def _renaming_S(n):
@@ -1126,20 +1360,20 @@ def _renaming_D(n):
     # Rotaciones
     for k in range(n):
         if k == 0:
-            r.append(r"$e$")
+            r.append(r"e")
         elif k == 1:
-            r.append(r"$r$")
+            r.append(r"r")
         else:
-            r.append(rf"$r^{{{k}}}$")
+            r.append(rf"r^{{{k}}}")
             
     # Reflexiones
     for k in range(n):
         if k == 0:
-            r.append(r"$s$")
+            r.append(r"s")
         elif k == 1:
-            r.append(r"$rs$")
+            r.append(r"rs")
         else:
-            r.append(rf"$r^{{{k}}}s$")
+            r.append(rf"r^{{{k}}}s")
             
     return r
 
@@ -1153,18 +1387,18 @@ def _renaming_Dic(n):
     names = []
     for k in range(2 * n):
         if k == 0:
-            names.append(r"$e$")
+            names.append(r"e")
         elif k == 1:
-            names.append(r"$a$")
+            names.append(r"a")
         else:
-            names.append(rf"$a^{{{k}}}$")
+            names.append(rf"a^{{{k}}}")
     for k in range(2 * n):
         if k == 0:
-            names.append(r"$x$")
+            names.append(r"x")
         elif k == 1:
-            names.append(r"$ax$")
+            names.append(r"ax")
         else:
-            names.append(rf"$a^{{{k}}}x$")
+            names.append(rf"a^{{{k}}}x")
     return names
 
 def _reset_renaming(G):

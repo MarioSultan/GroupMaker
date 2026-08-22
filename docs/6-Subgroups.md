@@ -19,7 +19,7 @@ G.subgroups()
 
 The returned list includes:
 
-- The trivial subgroup $\{e\}$.
+- The trivial subgroup $I:=(\{e\},*)$.
 - All proper subgroups of $G$.
 - The group $G$ itself.
 
@@ -91,7 +91,7 @@ G = C4
 
 H_group = CayleyGroup(
     [[0, 1], [1, 0]],
-    names=["$e$", "$r^{2}$"]
+    elements=["$e$", "$r^{2}$"]
 )
 
 H = CayleySubgroup(H_group, G)
@@ -154,7 +154,7 @@ H = S3.proper_subgroups()[0]
 H.group     #S3
 ```
 
-The subgroup itself is also stored internally as `H.subgroup`. The names of the elements of the parent group are available through `H.gnames` and the Cayley table of the parent group through `H.gcayley`.
+The subgroup itself is also stored internally as `H.subgroup`. The names of the elements of the parent group are available through `H.gelements` and the Cayley table of the parent group through `H.gcayley`.
 
 These attributes are mainly used internally by GroupsMath to perform operations that depend on the relationship between a subgroup and its parent group.
 
@@ -220,10 +220,10 @@ By default, this returns the left coset and uses the element names of the parent
 ```python
 H = C4.proper_subgroups()[0]
 
-H.coset("$r$")
+H.coset("r")
 ```
 
-The side can be specified explicitly with `H.coset("$r$", side="left")` or `H.coset("$r$", side="right")`.
+The side can be specified explicitly with `H.coset("r", side="left")` or `H.coset("r", side="right")`.
 
 The default behavior is:
 
@@ -238,19 +238,19 @@ H.coset(element, side="left", return_names=True)
 By default, `coset()` returns the names of the elements. For example:
 
 ```python
-H.coset("$r$")
+H.coset("r")
 ```
 
 To obtain the internal indices instead, use:
 
 ```python
-H.coset("$r$", return_names=False)
+H.coset("r", return_names=False)
 ```
 
 This can be useful when the coset information is intended for further computation. For example:
 
 ```python
-H.coset("$r$", side="left", return_names=False)
+H.coset("r", side="left", return_names=False)
 ```
 
 The argument `element` must correspond to one of the names stored in the parent group.

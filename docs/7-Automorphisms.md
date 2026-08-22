@@ -49,7 +49,7 @@ The tuple is interpreted as:
 phi[i] = image of i
 ```
 
-The element names stored in `G.names` are only used for displaying the group. Automorphisms themselves act on the internal indices of the Cayley table.
+The element names stored in `G.elements` are only used for displaying the group. Automorphisms themselves act on the internal indices of the Cayley table.
 
 ---
 
@@ -325,7 +325,7 @@ Both representations can be mixed inside the list.
 
 ## Important notes
 
-* Automorphisms in GroupsMath are represented internally using indices, not the visible names in `G.names`.
+* Automorphisms in GroupsMath are represented internally using indices, not the visible names in `G.elements`.
 
 * The tuple `(0, 1, ..., n-1)` represents the identity automorphism.
 

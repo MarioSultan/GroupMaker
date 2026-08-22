@@ -2,7 +2,7 @@
 
 Once a group has been created, either manually or by using one of the available group families, GroupsMath provides several methods for studying its algebraic structure.
 
-The examples below use the precooked groups included in the library, but the same methods can be applied to any instance of the `CayleyGroup` class.
+The examples below use the precooked groups included in the library, but the same methods can be applied to any instance of the `Group` class.
 
 ```python
 from groupsmath.precooked import *
@@ -26,10 +26,10 @@ For example:
 S3.identity()     # 0
 ```
 
-Since the identity corresponds to an element of `G.names`, its displayed name can be obtained with:
+Since the identity corresponds to an element of `G.elements`, its displayed name can be obtained with:
 
 ```python
-S3.names[S3.identity()]     # 'e'
+S3.elements[S3.identity()]     # 'e'
 ```
 
 ---
@@ -42,12 +42,12 @@ The order of an element $g \in G$ is the smallest positive integer $n$ such that
 G.element_orders()
 ```
 
-The returned list follows the same order as `G.names`.
+The returned list follows the same order as `G.elements`.
 
 For example:
 
 ```python
-S3.names
+S3.elements
 # ['e', '(23)', '(12)', '(123)', '(132)', '(13)']
 
 S3.element_orders()
@@ -138,7 +138,7 @@ Q8.center()        # [0, 1]
 The corresponding element names are:
 
 ```python
-[Q8.names[i] for i in Q8.center()]
+[Q8.elements[i] for i in Q8.center()]
 # ['1', '-1']
 ```
 
@@ -233,7 +233,7 @@ Q = G / H
 
 Both expressions produce the same quotient group.
 
-The resulting object is an instance of the `CayleyGroup` class and can therefore be studied using the usual methods:
+The resulting object is an instance of the `Group` class and can therefore be studied using the usual methods:
 
 ```python
 Q.order()

@@ -1,6 +1,6 @@
 # Cayley table visualization
 
-GroupsMath allows you to visualize the Cayley table of any `CayleyGroup` object using `matplotlib.pyplot`.
+GroupsMath allows you to visualize the Cayley table of a `Group` object using `matplotlib.pyplot`.
 
 The Cayley table contains the result of the group operation for every ordered pair of elements. GroupsMath provides a dedicated method for displaying this information graphically.
 
@@ -107,12 +107,12 @@ This can be useful when working with larger groups.
 
 ## Custom element names
 
-The visualization always uses the names stored in `G.names` for the labels of the rows and columns. For example, consider:
+The visualization always uses the names stored in `G.elements` for the labels of the rows and columns. For example, consider:
 
 ```python
 G = CayleyGroup(
     [[0, 1], [1, 0]],
-    names=["e", "a"]
+    elements=["e", "a"]
 )
 
 G.cayley_table()
@@ -123,8 +123,8 @@ The axes and the values displayed inside the table will use `"e"` and `"a"` inst
 This makes it possible to construct groups using numerical Cayley tables while displaying the elements using conventional mathematical notation. For example, a cyclic group may use:
 
 ```python
-C5.names
-# ['$e$', '$r$', '$r^{2}$', '$r^{3}$', '$r^{4}$']
+C5.elements
+# ['e', 'r', 'r^{2}', 'r^{3}', 'r^{4}']
 ```
 
 and these names will automatically be used when plotting `C5.cayley_table()`.

@@ -17,7 +17,7 @@ Element(element, group)
 where:
 
 * `element` is the name of an element belonging to the group.
-* `group` is an instance of the `CayleyGroup` class.
+* `group` is an instance of the `Group` class.
 
 For example:
 
@@ -25,10 +25,10 @@ For example:
 from groupsmath import Element
 from groupsmath.precooked import C4
 
-r = Element("$r$", C4)
+r = Element("r", C4)
 ```
 
-The constructor checks that the provided element belongs to the group. If it does not, GroupsMath raises a `ValueError`. For example, `x = Element("x", C4)` raises an error because `"x"` is not an element of `C4`.
+The constructor checks that the provided element belongs to the group. If it does not, GroupsMath raises a `ValueError`. For example, `x = Element("x", C4)` raises an error because `"x"` is not in `C4.elements`.
 
 ---
 
@@ -39,10 +39,10 @@ When an `Element` object is created, GroupsMath stores both the visible element 
 For example:
 
 ```python
-r = Element("$r$", C4)
+r = Element("r", C4)
 
 r.element
-# '$r$'
+# 'r'
 
 r.index
 # 1
@@ -51,7 +51,7 @@ r.group
 # C4
 ```
 
-The index is obtained from the position of the element inside `group.names`.
+The index is obtained from the position of the element inside `group.elements`.
 
 This distinction is important because the group operation is performed using the Cayley table, while the resulting `Element` object is created using the corresponding visible name.
 
@@ -68,7 +68,7 @@ a * b
 The multiplication is performed using the Cayley table of the group associated with the elements, therefore, both elements must belong to the same group. For example:
 
 ```python
-r = Element("$r$", C4)
+r = Element("r", C4)
 
 r * r
 ```
@@ -95,7 +95,7 @@ element ** n
 For example:
 
 ```python
-r = Element("$r$", C4)
+r = Element("r", C4)
 
 r ** 2
 ```
@@ -122,8 +122,8 @@ Two elements are considered equal when both of the following are equal:
 For example:
 
 ```python
-r1 = Element("$r$", C4)
-r2 = Element("$r$", C4)
+r1 = Element("r", C4)
+r2 = Element("r", C4)
 
 r1 == r2
 # True
@@ -143,7 +143,7 @@ from groupsmath import Element
 from groupsmath.precooked import C4
 
 # Create an element
-r = Element("$r$", C4)
+r = Element("r", C4)
 
 # Basic information
 print(r)
@@ -166,7 +166,7 @@ rinv = r ** -1
 print(rinv)
 
 # Verification
-print(r * rinv == Element("$e$", C4))
+print(r * rinv == Element("e", C4))
 ```
 
-The `Element` class provides a direct object-oriented way of working with individual elements of a finite group. Instead of manually accessing entries of a Cayley table, group operations can be written using familiar algebraic notation such as: `a * b` and `a ** n` while the underlying computations are still performed entirely from the Cayley table of the associated `CayleyGroup`.
+The `Element` class provides a direct object-oriented way of working with individual elements of a finite group. Instead of manually accessing entries of a Cayley table, group operations can be written using familiar algebraic notation such as: `a * b` and `a ** n` while the underlying computations are still performed entirely by the associated `Group`.

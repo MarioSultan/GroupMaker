@@ -14,16 +14,12 @@ $$
 (a_1, b_1) \ast (a_2, b_2) = (a_1 a_2, b_1 b_2)
 $$
 
-In GroupsMath, the direct product can be constructed using the function `direct_product(A, B)` or using the standard multiplication operator `*`:
+In GroupsMath, the direct product can be constructed using the standard multiplication operator `*`:
 
 ```python
 from groupsmath import direct_product
 from groupsmath.precooked import C2, C3
 
-# Using the function
-G = direct_product(C2, C3)
-
-# Using the * operator
 G = C2 * C3
 ```
 
@@ -37,8 +33,8 @@ The names of the elements in $A \times B$ are formed by joining the correspondin
 from groupsmath.precooked import C2, C3
 
 G = C2 * C3
-print(G.names)
-# ['$e$,$e$', '$e$,$r$', '$r$,$e$', '$r$,$r$']
+print(G.elements)
+# ['e,e', 'e,r', 'r,e', 'r,r']
 ```
 
 ---
@@ -51,20 +47,16 @@ $$
 G^n = \underbrace{G \times G \times \dots \times G}_{n \text{ times}}
 $$
 
-In GroupsMath, direct powers can be constructed using the function `direct_power(G, n)` or using the exponentiation operator `**`:
+In GroupsMath, direct powers can be constructed using the exponentiation operator `**`:
 
 ```python
 from groupsmath import direct_power
 from groupsmath.precooked import C2
 
-# Using the function
-G3 = direct_power(C2, 3)
-
-# Using the ** operator
 G3 = C2 ** 3
 ```
 
-The integer exponent $n$ must be at least $2$. Attempting to compute `G ** 1` or `G ** 0` will raise a `ValueError`.
+>The integer exponent $n$ must be at least $2$. Attempting to compute `G ** 1` or `G ** 0` will raise a `ValueError`.
 
 For example, the Klein four-group $V_4$ is isomorphic to $C_2 \times C_2$:
 
@@ -132,8 +124,8 @@ D3_constructed = semidirect_product(C3, C2, f)
 # Inspect properties
 print("Order:", D3_constructed.order())          # 6
 print("Is abelian?", D3_constructed.is_abelian()) # False
-print("Element names:", D3_constructed.names)
-# ['$e$,$e$', '$e$,$r$', '$r$,$e$', '$r$,$r$', '$r^{2}$,$e$', '$r^{2}$,$r$']
+print("Element names:", D3_constructed.elements)
+# ['e$,$e', 'e$,r', 'r,$e', 'r,r', 'r^{2}$,$e', 'r^{2}$,r']
 ```
 
 ---

@@ -18,8 +18,8 @@ from groupsmath import cyclic_group
 # Create a cyclic group of order 5
 C5 = cyclic_group(5)
 
-print(C5.names)
-# ['$e$', '$r$', '$r^{2}$', '$r^{3}$', '$r^{4}$']
+print(C5.elements)
+# ['e', 'r', 'r^{2}', 'r^{3}', 'r^{4}']
 
 C5.is_cyclic()  # True
 C5.is_abelian() # True
@@ -37,7 +37,7 @@ from groupsmath import symmetric_group
 # Create the symmetric group S3 (degree 3, order 3! = 6)
 S3 = symmetric_group(3)
 
-print(S3.names)
+print(S3.elements)
 # ['e', '(23)', '(12)', '(123)', '(132)', '(13)']
 
 S3.order()     # 6
@@ -56,7 +56,7 @@ from groupsmath import alternating_group
 # Create the alternating group A4 (degree 4, order 4!/2 = 12)
 A4 = alternating_group(4)
 
-print(A4.names)
+print(A4.elements)
 # ['e', '(234)', '(243)', '(12)(34)', '(123)', '(124)', '(132)', '(134)', '(13)(24)', '(142)', '(143)', '(14)(23)']
 
 A4.order() # 12
@@ -74,8 +74,8 @@ from groupsmath import dihedral_group
 # Create the dihedral group D4 (order 2*4 = 8)
 D4 = dihedral_group(4)
 
-print(D4.names)
-# ['$e$', '$r$', '$r^{2}$', '$r^{3}$', '$s$', '$rs$', '$r^{2}s$', '$r^{3}s$']
+print(D4.elements)
+# ['e', 'r', 'r^{2}', 'r^{3}', 's', 'rs', 'r^{2}s', 'r^{3}s']
 
 D4.order()     # 8
 D4.is_abelian() # False
@@ -93,7 +93,7 @@ from groupsmath import units_group
 # Create the units group U(8)
 U8 = units_group(8)
 
-print(U8.names)
+print(U8.elements)
 # ['1', '3', '5', '7']
 
 U8.is_abelian() # True
@@ -111,8 +111,8 @@ from groupsmath import dicyclic_group
 # Create the dicyclic group Dic2 (order 8)
 Dic2 = dicyclic_group(2)
 
-print(Dic2.names)
-# ['$e$', '$a$', '$a^{2}$', '$a^{3}$', '$x$', '$ax$', '$a^{2}x$', '$a^{3}x$']
+print(Dic2.elements)
+# ['e', 'a', 'a^{2}', 'a^{3}', 'x', 'ax', 'a^{2}x', 'a^{3}x']
 
 Dic2.order() # 8
 ```
@@ -135,11 +135,11 @@ from groupsmath.precooked import *
 
 | Family | Instances Available | Examples & Description |
 | :--- | :--- | :--- |
-| **Trivial Group** | `I` | The trivial group containing only the identity element `$e$`. |
-| **Cyclic Groups** | `C1` through `C20` | `C5` represents $C_5$, with element names `['$e$', '$r$', '$r^{2}$', '$r^{3}$', '$r^{4}$']`. |
+| **Trivial Group** | `I` | The trivial group containing only the identity element `e`. |
+| **Cyclic Groups** | `C1` through `C20` | `C5` represents $C_5$, with element names `['e', 'r', 'r^{2}', 'r^{3}', 'r^{4}']`. |
 | **Symmetric Groups** | `S1`, `S2`, `S3`, `S4` | `S3` represents $S_3$ (order 6), `S4` represents $S_4$ (order 24). |
 | **Alternating Groups** | `A1`, `A2`, `A3`, `A4` | `A4` represents $A_4$ (order 12) with cycle notation. |
-| **Dihedral Groups** | `D1` through `D10` | `D4` represents $D_4$ (order 8) with elements `$e$, $r$, $s$, \dots$`. |
+| **Dihedral Groups** | `D1` through `D10` | `D4` represents $D_4$ (order 8) with elements `e`, `r`, `s`, ... |
 | **Units Groups Modulo $n$** | `U2` through `U20` | `U8` represents $U(8) = \{1, 3, 5, 7\}$, `U10` represents $U(10)$. |
 | **Klein Four-Group** | `V4` | Klein 4-group with names `["e", "a", "b", "ab"]`. |
 | **Quaternion Group** | `Q8` | Quaternion group of order 8 with names `["1", "-1", "i", "-i", "j", "-j", "k", "-k"]`. |
@@ -149,14 +149,14 @@ from groupsmath.precooked import *
 
 ## Usage Examples with Precooked Groups
 
-Since precooked groups are instances of the `CayleyGroup` class, all standard methods and visual representations work out of the box:
+Since precooked groups are instances of the `Group` class, all standard methods and visual representations work out of the box:
 
 ```python
 from groupsmath.precooked import Q8, V4, C6, D3
 
 # Inspect Quaternion Group Q8
 print("Q8 order:", Q8.order())           # 8
-print("Q8 elements:", Q8.names)          # ['1', '-1', 'i', '-i', 'j', '-j', 'k', '-k']
+print("Q8 elements:", Q8.elements)          # ['1', '-1', 'i', '-i', 'j', '-j', 'k', '-k']
 print("Q8 Center:", Q8.center())         # [0, 1] , which are ['1', '-1']
 
 # Compare Klein Four-Group V4 vs C4
